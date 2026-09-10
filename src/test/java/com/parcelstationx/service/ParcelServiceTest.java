@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ParcelServiceTest {
+  private ConnectionProvider connections;
   private ParcelService service;
   private ShelfDaoImpl shelves;
   private ParcelEventDaoImpl events;
@@ -20,7 +21,7 @@ class ParcelServiceTest {
   @BeforeEach
   void setup() throws Exception {
     String url = "jdbc:h2:mem:service" + System.nanoTime() + ";MODE=MySQL;DB_CLOSE_DELAY=-1";
-    ConnectionProvider connections =
+    connections =
         () -> {
           try {
             return DriverManager.getConnection(url);
@@ -82,5 +83,29 @@ class ParcelServiceTest {
     assertThrows(BusinessException.class, () -> service.outbound("bad", 1L));
     service.outbound(stored.pickupCode(), 1L);
     assertThrows(BusinessException.class, () -> service.outbound(stored.pickupCode(), 1L));
+  }
+
+  @Test
+  void rollsBackInboundWhenAuditWriteFails() throws Exception {
+    try (var connection = connections.getConnection();
+        var statement = connection.createStatement()) {
+      statement.execute("DROP TABLE operation_logs");
+    }
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            service.inbound(
+                new InboundRequest("TRACK-ROLLBACK", "SF", "13800000000", null, 1L, "")));
+    try (var connection = connections.getConnection();
+        var statement = connection.createStatement()) {
+      try (var rows = statement.executeQuery("SELECT COUNT(*) FROM parcels")) {
+        rows.next();
+        assertEquals(0, rows.getInt(1));
+      }
+      try (var rows = statement.executeQuery("SELECT occupied FROM shelves WHERE id=1")) {
+        rows.next();
+        assertEquals(0, rows.getInt(1));
+      }
+    }
   }
 }

@@ -17,3 +17,9 @@
 ## 剩余风险
 
 - 完整的 MySQL DAO 集成测试及 >=20 客户、>=50 快件演示数据需在有 MySQL 的答辩机执行。
+
+## 第二轮实现
+
+- 增加入库末端写日志失败时的 transaction rollback 测试，验证 parcels 与 shelf occupied 均回滚。
+- 增加 `integration-test` Maven profile 和 MySQL JDBC schema 探测测试。
+- 本机 MySQL 服务因权限无法启动，本阶段保持 `IN_PROGRESS`，不声称真实 MySQL 已验证。

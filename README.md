@@ -7,7 +7,7 @@
 3. 复制 `application.example.properties` 为 `application.properties`，填写本地密码；也可配置 `PARCEL_DB_URL`、`PARCEL_DB_USERNAME`、`PARCEL_DB_PASSWORD`。
 4. 运行 `mvn clean test`，再运行 `com.parcelstationx.app.ParcelStationApplication`。
 
-演示账号：`admin`、`staff01`、`staff02`；初始密码需根据课程环境的 SHA-256 密码策略重新设置并更新 seed。
+演示账号：`admin`、`staff01`、`staff02`；统一初始密码：`admin123`。
 
 > 《软件设计与开发 II》Java 大作业项目规划仓库  
 > 当前仓库阶段：**规划与开发约束已完成，业务代码尚未开始实现**。

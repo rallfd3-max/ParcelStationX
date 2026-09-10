@@ -1,4 +1,6 @@
 # 已知限制
 
-- 当前执行环境无 MySQL CLI，未完成真实 schema 导入和 JDBC 集成测试。
-- Swing 页面提供导航和通用表格骨架；完整 DAO 绑定和批量演示数据需要在 MySQL 可用环境中完成。
+- 自动环境无法启动已安装的 Windows MySQL 服务，未执行真实 MySQL schema、seed 和 UI 主流程验证。
+- H2 MySQL 模式已验证 JDBC DAO 与事务语义，但不能替代 MySQL 8 最终验收。
+- 通知为课程用模拟发送，不接真实短信网关。
+- Phase 1、8、9 在完成 `MYSQL_VERIFICATION_GUIDE.md` 前保持 `IN_PROGRESS`。

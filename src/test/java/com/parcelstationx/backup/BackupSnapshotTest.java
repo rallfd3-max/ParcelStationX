@@ -42,4 +42,30 @@ class BackupSnapshotTest {
     assertEquals("A", store.value.customers().get(0).name());
     Files.delete(file);
   }
+
+  @Test
+  void rejectsSnapshotWithInvalidChecksum() throws Exception {
+    BackupSnapshot invalid =
+        new BackupSnapshot(
+            new BackupMetadata("1", LocalDateTime.now(), 99, "bad"),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of());
+    class Store implements BackupDataStore {
+      public BackupSnapshot snapshot() {
+        return invalid;
+      }
+
+      public void restore(BackupSnapshot value) {}
+    }
+    BackupService writer = new BackupService(new Store());
+    var file = Files.createTempFile("invalid-snapshot", ".ser");
+    writer.backup(file);
+    assertThrows(com.parcelstationx.exception.AppException.class, () -> writer.restore(file));
+    Files.delete(file);
+  }
 }

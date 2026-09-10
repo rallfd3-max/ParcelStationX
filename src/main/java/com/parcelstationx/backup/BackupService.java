@@ -53,7 +53,22 @@ public final class BackupService {
 
   private BackupSnapshot readSnapshot(Path file) {
     Object value = readObject(file);
-    if (value instanceof BackupSnapshot snapshot) return snapshot;
+    if (value instanceof BackupSnapshot snapshot) {
+      long count =
+          snapshot.customers().size()
+              + snapshot.shelves().size()
+              + snapshot.parcels().size()
+              + snapshot.events().size()
+              + snapshot.exceptions().size()
+              + snapshot.notifications().size()
+              + snapshot.operationLogs().size();
+      String checksum = Integer.toHexString(Long.hashCode(count));
+      if (count != snapshot.metadata().recordCount()
+          || !checksum.equals(snapshot.metadata().checksum())) {
+        throw new AppException("Backup snapshot checksum is invalid.");
+      }
+      return snapshot;
+    }
     throw new AppException("Backup file does not contain a snapshot.");
   }
 

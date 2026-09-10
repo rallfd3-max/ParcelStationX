@@ -37,6 +37,13 @@ public final class CustomerDaoImpl extends AbstractJdbcDao<Customer> implements 
         (statement, ignored) -> statement.setString(1, "%" + mobile + "%"));
   }
 
+  public List<Customer> findByMobile(java.sql.Connection connection, String mobile) {
+    return query(
+        connection,
+        "SELECT " + COLUMNS + " FROM customers WHERE mobile=? ORDER BY id",
+        (statement, ignored) -> statement.setString(1, mobile));
+  }
+
   @Override
   protected Long idOf(Customer value) {
     return value.id();

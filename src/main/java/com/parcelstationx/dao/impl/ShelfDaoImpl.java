@@ -43,6 +43,15 @@ public final class ShelfDaoImpl extends AbstractJdbcDao<Shelf> implements ShelfD
         (s, v) -> {});
   }
 
+  public Optional<Shelf> findAvailable(java.sql.Connection connection) {
+    return queryOne(
+        connection,
+        "SELECT "
+            + COLUMNS
+            + " FROM shelves WHERE status='ACTIVE' AND occupied<capacity ORDER BY occupied/capacity,id LIMIT 1",
+        (s, v) -> {});
+  }
+
   @Override
   protected Long idOf(Shelf v) {
     return v.id();

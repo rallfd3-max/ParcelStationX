@@ -32,10 +32,24 @@ public final class ParcelDaoImpl extends AbstractJdbcDao<Parcel> implements Parc
         "SELECT " + COLUMNS + " FROM parcels WHERE tracking_no=?", (s, v) -> s.setString(1, value));
   }
 
+  public Optional<Parcel> findByTrackingNo(java.sql.Connection connection, String value) {
+    return queryOne(
+        connection,
+        "SELECT " + COLUMNS + " FROM parcels WHERE tracking_no=?",
+        (s, v) -> s.setString(1, value));
+  }
+
   @Override
   public Optional<Parcel> findByPickupCode(String value) {
     return queryOne(
         "SELECT " + COLUMNS + " FROM parcels WHERE pickup_code=? AND status='IN_STOCK'",
+        (s, v) -> s.setString(1, value));
+  }
+
+  public Optional<Parcel> findByPickupCode(java.sql.Connection connection, String value) {
+    return queryOne(
+        connection,
+        "SELECT " + COLUMNS + " FROM parcels WHERE pickup_code=?",
         (s, v) -> s.setString(1, value));
   }
 

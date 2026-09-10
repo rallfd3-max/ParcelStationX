@@ -90,9 +90,17 @@ public abstract class AbstractJdbcDao<T> implements BaseDao<T, Long> {
     return queryOne(selectByIdSql, (statement, ignored) -> statement.setLong(1, id));
   }
 
+  public Optional<T> findById(Connection connection, Long id) {
+    return queryOne(connection, selectByIdSql, (statement, ignored) -> statement.setLong(1, id));
+  }
+
   @Override
   public List<T> findAll() {
     return query(selectAllSql, (statement, ignored) -> {});
+  }
+
+  public List<T> findAll(Connection connection) {
+    return query(connection, selectAllSql, (statement, ignored) -> {});
   }
 
   @Override
@@ -111,9 +119,28 @@ public abstract class AbstractJdbcDao<T> implements BaseDao<T, Long> {
     return rows.stream().findFirst();
   }
 
+  protected Optional<T> queryOne(Connection connection, String sql, SqlBinder<Void> binder) {
+    return query(connection, sql, binder).stream().findFirst();
+  }
+
   protected List<T> query(String sql, SqlBinder<Void> binder) {
     try (Connection connection = connections.getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)) {
+      binder.bind(statement, null);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        List<T> rows = new ArrayList<>();
+        while (resultSet.next()) {
+          rows.add(mapper.map(resultSet));
+        }
+        return rows;
+      }
+    } catch (SQLException exception) {
+      throw failure("query", exception);
+    }
+  }
+
+  protected List<T> query(Connection connection, String sql, SqlBinder<Void> binder) {
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
       binder.bind(statement, null);
       try (ResultSet resultSet = statement.executeQuery()) {
         List<T> rows = new ArrayList<>();

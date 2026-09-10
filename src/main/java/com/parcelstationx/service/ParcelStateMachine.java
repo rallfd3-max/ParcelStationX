@@ -1,3 +1,22 @@
 package com.parcelstationx.service;
-import com.parcelstationx.exception.BusinessException; import com.parcelstationx.model.ParcelStatus;
-public final class ParcelStateMachine { public boolean canTransition(ParcelStatus from, ParcelStatus to) { return switch (from) { case IN_STOCK -> to == ParcelStatus.PICKED_UP || to == ParcelStatus.EXCEPTION || to == ParcelStatus.RETURNED; case EXCEPTION -> to == ParcelStatus.IN_STOCK || to == ParcelStatus.RETURNED; default -> false; }; } public void requireTransition(ParcelStatus from, ParcelStatus to) { if (!canTransition(from, to)) throw new BusinessException("Parcel state transition is not allowed: " + from + " -> " + to); } }
+
+import com.parcelstationx.exception.BusinessException;
+import com.parcelstationx.model.ParcelStatus;
+
+public final class ParcelStateMachine {
+  public boolean canTransition(ParcelStatus from, ParcelStatus to) {
+    return switch (from) {
+      case IN_STOCK ->
+          to == ParcelStatus.PICKED_UP
+              || to == ParcelStatus.EXCEPTION
+              || to == ParcelStatus.RETURNED;
+      case EXCEPTION -> to == ParcelStatus.IN_STOCK || to == ParcelStatus.RETURNED;
+      default -> false;
+    };
+  }
+
+  public void requireTransition(ParcelStatus from, ParcelStatus to) {
+    if (!canTransition(from, to))
+      throw new BusinessException("Parcel state transition is not allowed: " + from + " -> " + to);
+  }
+}

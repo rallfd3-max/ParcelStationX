@@ -1,3 +1,48 @@
 package com.parcelstationx.ui.frame;
-import com.parcelstationx.ui.component.SimpleTablePanel; import javax.swing.*; import java.awt.*; import java.util.LinkedHashMap; import java.util.Map;
-public final class MainFrame extends JFrame { private final CardLayout cards=new CardLayout(); private final JPanel content=new JPanel(cards); public MainFrame() { super("ParcelStationX - 社区快递驿站"); Map<String,String> pages=new LinkedHashMap<>(); pages.put("首页","Dashboard"); pages.put("快件入库","Inbound"); pages.put("在库快件","Inventory"); pages.put("快件出库","Outbound"); pages.put("客户管理","Customers"); pages.put("货架管理","Shelves"); pages.put("员工管理","Users"); pages.put("操作日志","Logs"); JPanel nav=new JPanel(new GridLayout(0,1,4,4)); for (var entry:pages.entrySet()) { content.add(tableOrLabel(entry.getValue()),entry.getValue()); JButton button=new JButton(entry.getKey()); button.addActionListener(e->cards.show(content,entry.getValue())); nav.add(button); } add(nav,BorderLayout.WEST); add(content,BorderLayout.CENTER); setSize(1000,650); setLocationRelativeTo(null); setDefaultCloseOperation(EXIT_ON_CLOSE); } private JComponent tableOrLabel(String id) { return switch(id) { case "Inventory" -> new SimpleTablePanel("运单号","取件码","状态","货架"); case "Customers" -> new SimpleTablePanel("姓名","手机号","楼栋","房间"); case "Shelves" -> new SimpleTablePanel("货架","区域","容量","占用"); case "Users" -> new SimpleTablePanel("账号","姓名","角色","状态"); case "Logs" -> new SimpleTablePanel("时间","操作","说明"); default -> new JLabel(id+" 页面",SwingConstants.CENTER); }; } }
+
+import com.parcelstationx.ui.component.SimpleTablePanel;
+import java.awt.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import javax.swing.*;
+
+public final class MainFrame extends JFrame {
+  private final CardLayout cards = new CardLayout();
+  private final JPanel content = new JPanel(cards);
+
+  public MainFrame() {
+    super("ParcelStationX - 社区快递驿站");
+    Map<String, String> pages = new LinkedHashMap<>();
+    pages.put("首页", "Dashboard");
+    pages.put("快件入库", "Inbound");
+    pages.put("在库快件", "Inventory");
+    pages.put("快件出库", "Outbound");
+    pages.put("客户管理", "Customers");
+    pages.put("货架管理", "Shelves");
+    pages.put("员工管理", "Users");
+    pages.put("操作日志", "Logs");
+    JPanel nav = new JPanel(new GridLayout(0, 1, 4, 4));
+    for (var entry : pages.entrySet()) {
+      content.add(tableOrLabel(entry.getValue()), entry.getValue());
+      JButton button = new JButton(entry.getKey());
+      button.addActionListener(e -> cards.show(content, entry.getValue()));
+      nav.add(button);
+    }
+    add(nav, BorderLayout.WEST);
+    add(content, BorderLayout.CENTER);
+    setSize(1000, 650);
+    setLocationRelativeTo(null);
+    setDefaultCloseOperation(EXIT_ON_CLOSE);
+  }
+
+  private JComponent tableOrLabel(String id) {
+    return switch (id) {
+      case "Inventory" -> new SimpleTablePanel("运单号", "取件码", "状态", "货架");
+      case "Customers" -> new SimpleTablePanel("姓名", "手机号", "楼栋", "房间");
+      case "Shelves" -> new SimpleTablePanel("货架", "区域", "容量", "占用");
+      case "Users" -> new SimpleTablePanel("账号", "姓名", "角色", "状态");
+      case "Logs" -> new SimpleTablePanel("时间", "操作", "说明");
+      default -> new JLabel(id + " 页面", SwingConstants.CENTER);
+    };
+  }
+}

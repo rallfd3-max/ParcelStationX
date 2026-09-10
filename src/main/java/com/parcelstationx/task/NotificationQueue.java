@@ -1,3 +1,34 @@
 package com.parcelstationx.task;
-import java.util.Queue; import java.util.concurrent.*;
-public final class NotificationQueue implements AutoCloseable { private final Queue<Runnable> pending=new ConcurrentLinkedQueue<>(); private final ExecutorService executor=Executors.newFixedThreadPool(2); public CompletableFuture<Void> submit(Runnable task) { pending.add(task); return CompletableFuture.runAsync(()->{Runnable next=pending.poll(); if(next!=null) try{next.run();}catch(RuntimeException ignored){/* isolate notification failures */}},executor); } public void close() { executor.shutdown(); try { if(!executor.awaitTermination(5,TimeUnit.SECONDS)) executor.shutdownNow(); } catch(InterruptedException e){executor.shutdownNow();Thread.currentThread().interrupt();} } }
+
+import java.util.Queue;
+import java.util.concurrent.*;
+
+public final class NotificationQueue implements AutoCloseable {
+  private final Queue<Runnable> pending = new ConcurrentLinkedQueue<>();
+  private final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+  public CompletableFuture<Void> submit(Runnable task) {
+    pending.add(task);
+    return CompletableFuture.runAsync(
+        () -> {
+          Runnable next = pending.poll();
+          if (next != null)
+            try {
+              next.run();
+            } catch (RuntimeException ignored) {
+              /* isolate notification failures */
+            }
+        },
+        executor);
+  }
+
+  public void close() {
+    executor.shutdown();
+    try {
+      if (!executor.awaitTermination(5, TimeUnit.SECONDS)) executor.shutdownNow();
+    } catch (InterruptedException e) {
+      executor.shutdownNow();
+      Thread.currentThread().interrupt();
+    }
+  }
+}

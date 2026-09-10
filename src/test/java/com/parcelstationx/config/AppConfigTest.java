@@ -1,13 +1,13 @@
 package com.parcelstationx.config;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.parcelstationx.exception.ConfigurationException;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 class AppConfigTest {
-    @Test
-    void failsClearlyWhenNoLocalDatabaseConfigurationExists() {
-        assertThrows(ConfigurationException.class, AppConfig::loadDatabaseConfig);
-    }
+  @Test
+  void failsClearlyWhenNoLocalDatabaseConfigurationExists() {
+    assertThrows(ConfigurationException.class, AppConfig::loadDatabaseConfig);
+  }
 }

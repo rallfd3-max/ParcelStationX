@@ -21,3 +21,9 @@
 ## 对下一阶段的影响
 
 - Phase 3 可基于模型和 DAO 契约实现状态机、入库/出库事务服务。
+
+## 第二轮实现
+
+- 增加八个真实 JDBC DAO 实现，统一使用 PreparedStatement、ResultSet 和 try-with-resources。
+- 增加 H2 MySQL 模式测试依赖，仅用于无需本机 MySQL 凭据的 JDBC CRUD 自动测试。
+- 全部 Java 文件使用 Google Java Format 正常格式化。

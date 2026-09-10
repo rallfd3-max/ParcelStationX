@@ -57,6 +57,12 @@ class JdbcDaoCrudTest {
     assertEquals("张三改", dao.findById(saved.id()).orElseThrow().name());
     assertTrue(dao.deleteById(saved.id()));
     assertTrue(dao.findAll().isEmpty());
+    try (var connection = connections.getConnection()) {
+      ((CustomerDaoImpl) dao).restore(connection, saved);
+    } catch (Exception exception) {
+      fail(exception);
+    }
+    assertEquals(saved.id(), dao.findById(saved.id()).orElseThrow().id());
   }
 
   @Test

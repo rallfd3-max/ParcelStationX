@@ -75,13 +75,13 @@ public final class JdbcBackupDataStore implements BackupDataStore {
           } catch (java.sql.SQLException e) {
             throw new DatabaseException("Backup restore cleanup failed.", e);
           }
-          value.customers().forEach(v -> customers.save(c, v));
-          value.shelves().forEach(v -> shelves.save(c, v));
-          value.parcels().forEach(v -> parcels.save(c, v));
-          value.events().forEach(v -> events.save(c, v));
-          value.exceptions().forEach(v -> exceptions.save(c, v));
-          value.notifications().forEach(v -> notifications.save(c, v));
-          value.operationLogs().forEach(v -> logs.save(c, v));
+          value.customers().forEach(v -> customers.restore(c, v));
+          value.shelves().forEach(v -> shelves.restore(c, v));
+          value.parcels().forEach(v -> parcels.restore(c, v));
+          value.events().forEach(v -> events.restore(c, v));
+          value.exceptions().forEach(v -> exceptions.restore(c, v));
+          value.notifications().forEach(v -> notifications.restore(c, v));
+          value.operationLogs().forEach(v -> logs.restore(c, v));
           return null;
         });
   }

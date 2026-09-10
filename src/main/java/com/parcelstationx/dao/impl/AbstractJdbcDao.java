@@ -85,6 +85,23 @@ public abstract class AbstractJdbcDao<T> implements BaseDao<T, Long> {
     }
   }
 
+  public T restore(Connection connection, T entity) {
+    if (idOf(entity) == null) return save(connection, entity);
+    String withIdColumns = insertSql.replaceFirst("\\) VALUES", ",id) VALUES");
+    int close = withIdColumns.lastIndexOf(')');
+    String restoreSql = withIdColumns.substring(0, close) + ",?)";
+    int parameterCount = (int) insertSql.chars().filter(character -> character == '?').count();
+    try (PreparedStatement statement = connection.prepareStatement(restoreSql)) {
+      insertBinder.bind(statement, entity);
+      statement.setLong(parameterCount + 1, idOf(entity));
+      if (statement.executeUpdate() != 1)
+        throw new DatabaseException("Expected one restored row.", null);
+      return entity;
+    } catch (SQLException exception) {
+      throw failure("restore", exception);
+    }
+  }
+
   @Override
   public Optional<T> findById(Long id) {
     return queryOne(selectByIdSql, (statement, ignored) -> statement.setLong(1, id));

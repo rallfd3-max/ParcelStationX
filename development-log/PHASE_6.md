@@ -19,3 +19,4 @@
 - NotificationService 持久化 PENDING/SUCCESS/FAILED、retryCount，复用可关闭通知队列。
 - ParcelService 在入库事务提交后才异步提交通知。
 - 新增 ExceptionPanel 和数据库级异常/通知测试。
+- 可注入 NotificationGateway 真实模拟失败，测试覆盖 FAILED 后 retry 成功和 retryCount。

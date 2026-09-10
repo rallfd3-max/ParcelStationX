@@ -90,4 +90,27 @@ class Phase6ServiceTest {
     }
     assertEquals(NotificationStatus.SUCCESS, records.findAll().get(0).status());
   }
+
+  @Test
+  void notificationPersistsFailureAndRetries() {
+    NotificationRecordDaoImpl records = new NotificationRecordDaoImpl(connections);
+    java.util.concurrent.atomic.AtomicInteger attempts =
+        new java.util.concurrent.atomic.AtomicInteger();
+    try (NotificationService service =
+        new NotificationService(
+            records,
+            customers,
+            new NotificationQueue(),
+            record -> {
+              if (attempts.getAndIncrement() == 0) throw new IllegalStateException("模拟网关失败");
+            })) {
+      service.notifyInbound(parcels.findById(1L).orElseThrow()).join();
+      NotificationRecord failed = records.findAll().get(0);
+      assertEquals(NotificationStatus.FAILED, failed.status());
+      service.retry(failed.id()).join();
+    }
+    NotificationRecord succeeded = records.findAll().get(0);
+    assertEquals(NotificationStatus.SUCCESS, succeeded.status());
+    assertEquals(1, succeeded.retryCount());
+  }
 }

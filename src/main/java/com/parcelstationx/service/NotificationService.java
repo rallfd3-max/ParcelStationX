@@ -11,12 +11,22 @@ public final class NotificationService implements AutoCloseable {
   private final NotificationRecordDao records;
   private final NotificationQueue queue;
   private final CustomerDao customers;
+  private final NotificationGateway gateway;
 
   public NotificationService(
       NotificationRecordDao records, CustomerDao customers, NotificationQueue queue) {
+    this(records, customers, queue, record -> {});
+  }
+
+  public NotificationService(
+      NotificationRecordDao records,
+      CustomerDao customers,
+      NotificationQueue queue,
+      NotificationGateway gateway) {
     this.records = records;
     this.customers = customers;
     this.queue = queue;
+    this.gateway = gateway;
   }
 
   public CompletableFuture<Void> notifyInbound(Parcel parcel) {
@@ -62,6 +72,7 @@ public final class NotificationService implements AutoCloseable {
 
   private void send(NotificationRecord record) {
     try {
+      gateway.send(record);
       records.save(
           new NotificationRecord(
               record.id(),

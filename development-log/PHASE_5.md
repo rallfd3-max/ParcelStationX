@@ -26,3 +26,4 @@
 - 增加 InboundPanel、InventoryPanel、OutboundPanel、CustomerPanel、ShelfPanel、UserPanel 和 OperationLogPanel。
 - 应用入口完成 UI -> Service -> DAO -> JDBC 依赖组装。
 - 入库、库存、出库使用 SwingWorker 执行数据库操作并显示友好结果。
+- 客户与货架页面支持新增和修改；员工页面支持新增、列表及启用状态管理。

@@ -26,4 +26,18 @@ public final class ShelfService {
   public List<Shelf> findAll() {
     return shelves.findAll();
   }
+
+  public Shelf update(long id, int capacity, ShelfStatus status) {
+    Shelf current = shelves.findById(id).orElseThrow(() -> new BusinessException("货架不存在。"));
+    if (capacity < current.occupied()) throw new BusinessException("容量不能小于当前占用数。");
+    return shelves.save(
+        new Shelf(
+            id,
+            current.shelfCode(),
+            current.zone(),
+            capacity,
+            current.occupied(),
+            status,
+            current.createdAt()));
+  }
 }

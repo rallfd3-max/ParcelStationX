@@ -10,7 +10,10 @@ public final class CustomerPanel extends JPanel {
     JTextField name = new JTextField(),
         mobile = new JTextField(),
         building = new JTextField(),
-        room = new JTextField();
+        room = new JTextField(),
+        id = new JTextField();
+    add(new JLabel("客户 ID（修改时填写）"));
+    add(id);
     add(new JLabel("姓名"));
     add(name);
     add(new JLabel("手机号"));
@@ -28,6 +31,24 @@ public final class CustomerPanel extends JPanel {
             service.create(
                 name.getText(), mobile.getText(), building.getText(), room.getText(), "");
             JOptionPane.showMessageDialog(this, "客户已新增");
+          } catch (RuntimeException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+          }
+        });
+    JButton update = new JButton("修改客户");
+    add(new JLabel());
+    add(update);
+    update.addActionListener(
+        e -> {
+          try {
+            service.update(
+                Long.parseLong(id.getText()),
+                name.getText(),
+                mobile.getText(),
+                building.getText(),
+                room.getText(),
+                "");
+            JOptionPane.showMessageDialog(this, "客户已修改");
           } catch (RuntimeException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage());
           }

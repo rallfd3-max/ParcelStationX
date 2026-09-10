@@ -22,6 +22,7 @@ import com.parcelstationx.service.PasswordHasher;
 import com.parcelstationx.service.ShelfService;
 import com.parcelstationx.service.StatisticsService;
 import com.parcelstationx.service.TransactionRunner;
+import com.parcelstationx.service.UserService;
 import com.parcelstationx.task.NotificationQueue;
 import com.parcelstationx.ui.frame.LoginFrame;
 import com.parcelstationx.ui.frame.MainFrame;
@@ -91,7 +92,11 @@ public final class ParcelStationApplication {
                           pages.put("快件出库", new OutboundPanel(parcelService, user.id()));
                           pages.put("客户管理", new CustomerPanel(new CustomerService(customers)));
                           pages.put("货架管理", new ShelfPanel(new ShelfService(shelves)));
-                          pages.put("员工管理", new UserPanel(new UserDaoImpl(connectionFactory)));
+                          pages.put(
+                              "员工管理",
+                              new UserPanel(
+                                  new UserService(
+                                      new UserDaoImpl(connectionFactory), new PasswordHasher())));
                           pages.put("操作日志", new OperationLogPanel(logs));
                           pages.put("异常件", new ExceptionPanel(exceptionService, user.id()));
                           pages.put("统计报表", new StatisticsPanel(statistics));

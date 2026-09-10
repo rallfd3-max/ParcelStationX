@@ -24,4 +24,21 @@ public final class CustomerService {
   public List<Customer> searchByMobile(String mobile) {
     return customers.findByMobile(mobile == null ? "" : mobile);
   }
+
+  public Customer update(
+      long id, String name, String mobile, String building, String room, String remark) {
+    Customer current = customers.findById(id).orElseThrow(() -> new BusinessException("客户不存在。"));
+    if (name == null || name.isBlank() || mobile == null || !mobile.matches("1\\d{10}"))
+      throw new BusinessException("客户信息无效。");
+    return customers.save(
+        new Customer(
+            id,
+            name.trim(),
+            mobile,
+            building,
+            room,
+            remark,
+            current.createdAt(),
+            LocalDateTime.now()));
+  }
 }

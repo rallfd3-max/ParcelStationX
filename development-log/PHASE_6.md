@@ -12,3 +12,10 @@
 ## 剩余风险
 
 - 通知持久化需在可用 MySQL 环境中连接 `notification_records` 表。
+
+## 第二轮实现
+
+- ExceptionService 事务化创建/处理异常，支持恢复 IN_STOCK 或 RETURNED，并写事件和操作日志。
+- NotificationService 持久化 PENDING/SUCCESS/FAILED、retryCount，复用可关闭通知队列。
+- ParcelService 在入库事务提交后才异步提交通知。
+- 新增 ExceptionPanel 和数据库级异常/通知测试。

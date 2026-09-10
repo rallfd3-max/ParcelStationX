@@ -21,6 +21,7 @@ public final class ParcelService {
   private final PickupCodeGenerator pickupCodes = new PickupCodeGenerator();
   private final ParcelStateMachine states = new ParcelStateMachine();
   private final Clock clock = Clock.systemDefaultZone();
+  private NotificationService notifications;
 
   public ParcelService(
       TransactionRunner transactions,
@@ -37,86 +38,94 @@ public final class ParcelService {
     this.logs = logs;
   }
 
+  public ParcelService withNotifications(NotificationService value) {
+    notifications = value;
+    return this;
+  }
+
   public Parcel inbound(InboundRequest request) {
     validateInbound(request.trackingNo(), request.customerMobile());
-    return transactions.run(
-        connection -> {
-          if (parcels.findByTrackingNo(connection, request.trackingNo()).isPresent()) {
-            throw new BusinessException("运单号已入库。");
-          }
-          Customer customer =
-              customers.findByMobile(connection, request.customerMobile()).stream()
-                  .findFirst()
-                  .orElseThrow(() -> new BusinessException("未找到匹配客户。"));
-          Shelf shelf =
-              request.shelfId() == null
-                  ? shelves
-                      .findAvailable(connection)
-                      .orElseThrow(() -> new BusinessException("没有可用货架。"))
-                  : shelves
-                      .findById(connection, request.shelfId())
-                      .orElseThrow(() -> new BusinessException("货架不存在。"));
-          if (shelf.status() != ShelfStatus.ACTIVE || shelf.occupied() >= shelf.capacity()) {
-            throw new BusinessException("货架已停用或已满。");
-          }
-          LocalDateTime now = LocalDateTime.now(clock);
-          String code =
-              pickupCodes.generate(
-                  new HashSet<>(
-                      parcels.findAll(connection).stream()
-                          .filter(p -> p.status() == ParcelStatus.IN_STOCK)
-                          .map(Parcel::pickupCode)
-                          .toList()));
-          Parcel parcel =
-              parcels.save(
+    Parcel result =
+        transactions.run(
+            connection -> {
+              if (parcels.findByTrackingNo(connection, request.trackingNo()).isPresent()) {
+                throw new BusinessException("运单号已入库。");
+              }
+              Customer customer =
+                  customers.findByMobile(connection, request.customerMobile()).stream()
+                      .findFirst()
+                      .orElseThrow(() -> new BusinessException("未找到匹配客户。"));
+              Shelf shelf =
+                  request.shelfId() == null
+                      ? shelves
+                          .findAvailable(connection)
+                          .orElseThrow(() -> new BusinessException("没有可用货架。"))
+                      : shelves
+                          .findById(connection, request.shelfId())
+                          .orElseThrow(() -> new BusinessException("货架不存在。"));
+              if (shelf.status() != ShelfStatus.ACTIVE || shelf.occupied() >= shelf.capacity()) {
+                throw new BusinessException("货架已停用或已满。");
+              }
+              LocalDateTime now = LocalDateTime.now(clock);
+              String code =
+                  pickupCodes.generate(
+                      new HashSet<>(
+                          parcels.findAll(connection).stream()
+                              .filter(p -> p.status() == ParcelStatus.IN_STOCK)
+                              .map(Parcel::pickupCode)
+                              .toList()));
+              Parcel parcel =
+                  parcels.save(
+                      connection,
+                      new Parcel(
+                          null,
+                          request.trackingNo(),
+                          request.courierCompany(),
+                          customer.id(),
+                          shelf.id(),
+                          code,
+                          ParcelStatus.IN_STOCK,
+                          now,
+                          null,
+                          request.operatorId(),
+                          request.remark(),
+                          now,
+                          now));
+              shelves.save(
                   connection,
-                  new Parcel(
-                      null,
-                      request.trackingNo(),
-                      request.courierCompany(),
-                      customer.id(),
+                  new Shelf(
                       shelf.id(),
-                      code,
+                      shelf.shelfCode(),
+                      shelf.zone(),
+                      shelf.capacity(),
+                      shelf.occupied() + 1,
+                      shelf.status(),
+                      shelf.createdAt()));
+              events.save(
+                  connection,
+                  new ParcelEvent(
+                      null,
+                      parcel.id(),
+                      "STORED",
+                      null,
                       ParcelStatus.IN_STOCK,
-                      now,
+                      request.operatorId(),
+                      "快件入库",
+                      now));
+              logs.save(
+                  connection,
+                  new OperationLog(
                       null,
                       request.operatorId(),
-                      request.remark(),
-                      now,
+                      "INBOUND",
+                      "PARCEL",
+                      parcel.id(),
+                      "快件 " + request.trackingNo() + " 入库",
                       now));
-          shelves.save(
-              connection,
-              new Shelf(
-                  shelf.id(),
-                  shelf.shelfCode(),
-                  shelf.zone(),
-                  shelf.capacity(),
-                  shelf.occupied() + 1,
-                  shelf.status(),
-                  shelf.createdAt()));
-          events.save(
-              connection,
-              new ParcelEvent(
-                  null,
-                  parcel.id(),
-                  "STORED",
-                  null,
-                  ParcelStatus.IN_STOCK,
-                  request.operatorId(),
-                  "快件入库",
-                  now));
-          logs.save(
-              connection,
-              new OperationLog(
-                  null,
-                  request.operatorId(),
-                  "INBOUND",
-                  "PARCEL",
-                  parcel.id(),
-                  "快件 " + request.trackingNo() + " 入库",
-                  now));
-          return parcel;
-        });
+              return parcel;
+            });
+    if (notifications != null) notifications.notifyInbound(result);
+    return result;
   }
 
   public Parcel outbound(String pickupCode, long operatorId) {

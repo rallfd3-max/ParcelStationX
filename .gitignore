@@ -1,0 +1,25 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Java/Maven
+target/
+*.class
+
+# Local configuration
+src/main/resources/application.properties
+.env
+
+# Logs
+logs/
+*.log
+
+# Backup runtime files
+backup-data/
+*.ser
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db

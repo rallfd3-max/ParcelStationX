@@ -1,0 +1,16 @@
+{
+  "project": "ParcelStationX",
+  "stage": "planning",
+  "language": "Java 17",
+  "ui": "Swing",
+  "database": "MySQL",
+  "framework_policy": "No Spring/SpringBoot/SSH/SSM/ORM",
+  "course_techniques": [
+    "Collections",
+    "Generics",
+    "Serialization",
+    "Multithreading",
+    "JDBC"
+  ],
+  "codex_mode": "phased-autonomous"
+}

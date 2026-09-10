@@ -50,3 +50,10 @@ git diff --check
 ## 对下一阶段的影响
 
 - Phase 2 可在既有 JDBC 基础上添加模型、泛型 DAO 和基础查询。
+
+## 第二轮审计修正
+
+- Phase 1 状态改为 `IN_PROGRESS`：schema 存在不等于已成功初始化。
+- 检查到 Windows `MySQL` 服务已安装但停止，3306 未监听。
+- 当前进程无权限启动该服务，且没有数据库凭据。
+- 新增 `docs/MYSQL_VERIFICATION_GUIDE.md`，不再以缺少 CLI 作为跳过 JDBC 验证的理由。

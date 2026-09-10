@@ -22,6 +22,7 @@
 - LoginFrame 接收真实用户名和密码，不再无条件放行。
 - 新增可复用 SearchBar、PaginationPanel 和 StatusBar。
 - MainFrame 支持注入真实业务页面；组件继续只在 EDT 创建。
+- 首次构建发现入口仍使用旧的无参数登录回调；已改为调用 `AuthenticationService` 并显示友好错误。
 
 ## 对下一阶段的影响
 

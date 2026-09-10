@@ -10,4 +10,5 @@ public record Customer(
     String room,
     String remark,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt) {}
+    LocalDateTime updatedAt)
+    implements java.io.Serializable {}

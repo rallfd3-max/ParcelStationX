@@ -10,4 +10,5 @@ public record ParcelEvent(
     ParcelStatus toStatus,
     Long operatorId,
     String description,
-    LocalDateTime createdAt) {}
+    LocalDateTime createdAt)
+    implements java.io.Serializable {}

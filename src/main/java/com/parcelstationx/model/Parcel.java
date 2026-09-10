@@ -15,4 +15,5 @@ public record Parcel(
     Long operatorId,
     String remark,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt) {}
+    LocalDateTime updatedAt)
+    implements java.io.Serializable {}

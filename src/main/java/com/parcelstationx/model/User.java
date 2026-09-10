@@ -10,4 +10,5 @@ public record User(
     UserRole role,
     boolean enabled,
     LocalDateTime createdAt,
-    LocalDateTime lastLoginAt) {}
+    LocalDateTime lastLoginAt)
+    implements java.io.Serializable {}

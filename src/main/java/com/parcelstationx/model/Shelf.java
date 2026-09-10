@@ -9,4 +9,5 @@ public record Shelf(
     int capacity,
     int occupied,
     ShelfStatus status,
-    LocalDateTime createdAt) {}
+    LocalDateTime createdAt)
+    implements java.io.Serializable {}

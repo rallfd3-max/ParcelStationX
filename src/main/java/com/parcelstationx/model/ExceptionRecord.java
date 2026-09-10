@@ -12,4 +12,5 @@ public record ExceptionRecord(
     Long handledBy,
     LocalDateTime createdAt,
     LocalDateTime handledAt,
-    String resolution) {}
+    String resolution)
+    implements java.io.Serializable {}

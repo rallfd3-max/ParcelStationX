@@ -9,4 +9,5 @@ public record OperationLog(
     String targetType,
     Long targetId,
     String description,
-    LocalDateTime createdAt) {}
+    LocalDateTime createdAt)
+    implements java.io.Serializable {}

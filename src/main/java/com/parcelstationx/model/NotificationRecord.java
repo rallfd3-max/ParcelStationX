@@ -13,4 +13,5 @@ public record NotificationRecord(
     int retryCount,
     LocalDateTime createdAt,
     LocalDateTime sentAt,
-    String errorMessage) {}
+    String errorMessage)
+    implements java.io.Serializable {}

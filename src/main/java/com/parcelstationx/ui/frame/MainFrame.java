@@ -35,6 +35,10 @@ public final class MainFrame extends JFrame {
     setDefaultCloseOperation(EXIT_ON_CLOSE);
   }
 
+  public void registerPage(String id, JComponent page) {
+    content.add(page, id);
+  }
+
   private JComponent tableOrLabel(String id) {
     return switch (id) {
       case "Inventory" -> new SimpleTablePanel("运单号", "取件码", "状态", "货架");

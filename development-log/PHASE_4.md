@@ -17,6 +17,12 @@
 
 - 运行 UI 需要可用数据库配置；Phase 5 将填充实际页面工作流。
 
+## 第二轮实现
+
+- LoginFrame 接收真实用户名和密码，不再无条件放行。
+- 新增可复用 SearchBar、PaginationPanel 和 StatusBar。
+- MainFrame 支持注入真实业务页面；组件继续只在 EDT 创建。
+
 ## 对下一阶段的影响
 
 - 各核心工作区已有稳定导航位置，Phase 5 可独立填充其页面。

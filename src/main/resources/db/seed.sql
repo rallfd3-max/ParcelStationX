@@ -29,7 +29,7 @@ SELECT 1000 + n, CONCAT('DEMO', LPAD(n, 6, '0')),
        NULL, 1 + MOD(n, 3), '批量演示快件', NOW(), NOW()
 FROM seq;
 
-UPDATE shelves SET occupied = CASE id WHEN 1 THEN 16 WHEN 2 THEN 17 WHEN 3 THEN 17 ELSE occupied END
+UPDATE shelves SET occupied = CASE id WHEN 1 THEN 17 WHEN 2 THEN 17 WHEN 3 THEN 16 ELSE occupied END
 WHERE id IN (1, 2, 3);
 
 INSERT IGNORE INTO exception_records

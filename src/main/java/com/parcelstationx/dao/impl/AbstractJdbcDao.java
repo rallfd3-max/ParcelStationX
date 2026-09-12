@@ -87,7 +87,9 @@ public abstract class AbstractJdbcDao<T> implements BaseDao<T, Long> {
 
   public T restore(Connection connection, T entity) {
     if (idOf(entity) == null) return save(connection, entity);
-    String withIdColumns = insertSql.replaceFirst("\\) VALUES", ",id) VALUES");
+    int valuesIndex = insertSql.indexOf(") VALUES");
+    String withIdColumns =
+        insertSql.substring(0, valuesIndex) + ",id" + insertSql.substring(valuesIndex);
     int close = withIdColumns.lastIndexOf(')');
     String restoreSql = withIdColumns.substring(0, close) + ",?)";
     int parameterCount = (int) insertSql.chars().filter(character -> character == '?').count();

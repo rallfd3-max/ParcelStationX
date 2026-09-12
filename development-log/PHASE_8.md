@@ -23,3 +23,14 @@
 - 增加入库末端写日志失败时的 transaction rollback 测试，验证 parcels 与 shelf occupied 均回滚。
 - 增加 `integration-test` Maven profile 和 MySQL JDBC schema 探测测试。
 - 本机 MySQL 服务因权限无法启动，本阶段保持 `IN_PROGRESS`，不声称真实 MySQL 已验证。
+
+## 第三轮验收
+
+- 扩展 MySQL integration tests：演示数据规模、货架占用一致性、约束、登录、客户、入库、出库、事件和日志工作流。
+- 真实 MySQL 未启动，阶段继续保持 `IN_PROGRESS`。
+
+## 第三轮最终验收
+
+- seed 货架占用修正为 17 / 17 / 16；MySQL integration test 增加占用与当前在库包裹一致性断言。
+- integration workflow 使用独立手机号/运单号并在 `@AfterEach` 删除测试数据，不破坏 seed 演示数据。
+- 真实 MySQL 因服务停止和凭据缺失未执行，Phase 8 保持 `IN_PROGRESS`。

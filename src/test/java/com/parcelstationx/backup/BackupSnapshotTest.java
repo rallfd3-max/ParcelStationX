@@ -14,7 +14,7 @@ class BackupSnapshotTest {
     LocalDateTime now = LocalDateTime.now();
     BackupSnapshot snapshot =
         new BackupSnapshot(
-            new BackupMetadata("1", now, 1, "1"),
+            new BackupMetadata("1", now, 1, ""),
             List.of(new Customer(1L, "A", "13800000000", null, null, null, now, now)),
             List.of(),
             List.of(),
@@ -22,8 +22,18 @@ class BackupSnapshotTest {
             List.of(),
             List.of(),
             List.of());
+    BackupSnapshot verifiedSnapshot =
+        new BackupSnapshot(
+            new BackupMetadata("1", now, 1, BackupService.checksum(snapshot)),
+            snapshot.customers(),
+            snapshot.shelves(),
+            snapshot.parcels(),
+            snapshot.events(),
+            snapshot.exceptions(),
+            snapshot.notifications(),
+            snapshot.operationLogs());
     class Store implements BackupDataStore {
-      BackupSnapshot value = snapshot;
+      BackupSnapshot value = verifiedSnapshot;
 
       public BackupSnapshot snapshot() {
         return value;
@@ -66,6 +76,59 @@ class BackupSnapshotTest {
     var file = Files.createTempFile("invalid-snapshot", ".ser");
     writer.backup(file);
     assertThrows(com.parcelstationx.exception.AppException.class, () -> writer.restore(file));
+    Files.delete(file);
+  }
+
+  @Test
+  void detectsModifiedBusinessContent() throws Exception {
+    LocalDateTime now = LocalDateTime.now();
+    BackupSnapshot original =
+        new BackupSnapshot(
+            new BackupMetadata("1", now, 1, ""),
+            List.of(new Customer(1L, "A", "13800000000", null, null, null, now, now)),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of());
+    original =
+        new BackupSnapshot(
+            new BackupMetadata("1", now, 1, BackupService.checksum(original)),
+            original.customers(),
+            original.shelves(),
+            original.parcels(),
+            original.events(),
+            original.exceptions(),
+            original.notifications(),
+            original.operationLogs());
+    BackupSnapshot modified =
+        new BackupSnapshot(
+            original.metadata(),
+            List.of(new Customer(1L, "CHANGED", "13800000000", null, null, null, now, now)),
+            original.shelves(),
+            original.parcels(),
+            original.events(),
+            original.exceptions(),
+            original.notifications(),
+            original.operationLogs());
+    class Store implements BackupDataStore {
+      BackupSnapshot value = modified;
+
+      public BackupSnapshot snapshot() {
+        return value;
+      }
+
+      public void restore(BackupSnapshot value) {
+        this.value = value;
+      }
+    }
+    Store store = new Store();
+    var file = Files.createTempFile("modified-snapshot", ".ser");
+    new BackupService(store).backup(file);
+    assertThrows(
+        com.parcelstationx.exception.AppException.class,
+        () -> new BackupService(store).restore(file));
     Files.delete(file);
   }
 }

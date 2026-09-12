@@ -44,9 +44,12 @@ public final class JdbcBackupDataStore implements BackupDataStore {
     var n = notifications.findAll();
     var l = logs.findAll();
     long count = c.size() + s.size() + p.size() + e.size() + x.size() + n.size() + l.size();
+    BackupSnapshot content =
+        new BackupSnapshot(
+            new BackupMetadata(VERSION, LocalDateTime.now(), count, ""), c, s, p, e, x, n, l);
     return new BackupSnapshot(
         new BackupMetadata(
-            VERSION, LocalDateTime.now(), count, Integer.toHexString(Long.hashCode(count))),
+            VERSION, content.metadata().createdAt(), count, BackupService.checksum(content)),
         c,
         s,
         p,

@@ -57,3 +57,8 @@ git diff --check
 - 检查到 Windows `MySQL` 服务已安装但停止，3306 未监听。
 - 当前进程无权限启动该服务，且没有数据库凭据。
 - 新增 `docs/MYSQL_VERIFICATION_GUIDE.md`，不再以缺少 CLI 作为跳过 JDBC 验证的理由。
+
+## 第三轮验收
+
+- 修正 seed 货架占用为 17 / 17 / 16。
+- MySQL 服务仍为 Stopped，3306 未监听；真实 schema 导入保持待人工执行。

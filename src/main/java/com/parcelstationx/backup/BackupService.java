@@ -3,6 +3,9 @@ package com.parcelstationx.backup;
 import com.parcelstationx.exception.AppException;
 import java.io.*;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 public final class BackupService {
   private final BackupDataStore store;
@@ -20,6 +23,26 @@ public final class BackupService {
     BackupSnapshot value = store.snapshot();
     write(file, value);
     return value;
+  }
+
+  public static String checksum(BackupSnapshot snapshot) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+          ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+        output.writeObject(snapshot.customers());
+        output.writeObject(snapshot.shelves());
+        output.writeObject(snapshot.parcels());
+        output.writeObject(snapshot.events());
+        output.writeObject(snapshot.exceptions());
+        output.writeObject(snapshot.notifications());
+        output.writeObject(snapshot.operationLogs());
+        output.flush();
+        return HexFormat.of().formatHex(digest.digest(bytes.toByteArray()));
+      }
+    } catch (NoSuchAlgorithmException | IOException exception) {
+      throw new AppException("Backup checksum calculation failed.", exception);
+    }
   }
 
   public void restore(Path file) {
@@ -62,9 +85,8 @@ public final class BackupService {
               + snapshot.exceptions().size()
               + snapshot.notifications().size()
               + snapshot.operationLogs().size();
-      String checksum = Integer.toHexString(Long.hashCode(count));
       if (count != snapshot.metadata().recordCount()
-          || !checksum.equals(snapshot.metadata().checksum())) {
+          || !checksum(snapshot).equals(snapshot.metadata().checksum())) {
         throw new AppException("Backup snapshot checksum is invalid.");
       }
       return snapshot;

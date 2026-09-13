@@ -28,6 +28,6 @@ Acceptance:
 - frontend tests/type-check/build pass.
 
 ## Phase H3 — Browser Regression
-Status: TODO
+Status: DONE
 
 Use a real browser when available. Verify line chart, pie chart, and parcel focus on at least six representative positions: front-left, front-right, rear-left, rear-right, first column and last column. Keep original V2 Phase 8 status truthful if external MySQL/browser acceptance remains incomplete.

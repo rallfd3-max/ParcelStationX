@@ -3,7 +3,7 @@
 V2.1 execution rule: start from the earliest TODO/IN_PROGRESS item. Each phase must be implemented, tested, fixed, documented, committed and pushed separately. After a phase passes, continue automatically to the next phase. Do not wait for user confirmation unless blocked by credentials, OS permission or an unavailable external environment.
 
 ## Phase A — Warehouse Drag UX
-Status: TODO
+Status: DONE
 
 Fix the 2D warehouse so the center shelf canvas has its own vertical scroll viewport. Add drag-edge auto-scroll near the top/bottom edge, cleanup on drop/dragend/cancel, keep 409 rollback, and keep the non-drag “move to slot” fallback. Acceptance: at 1366x768 a waiting parcel can be dragged to the lowest visible/previously off-screen empty slot and remains there after refresh.
 

@@ -54,14 +54,15 @@ nav a:hover, nav a.router-link-active { color: #e7f8ff; border-color: var(--cyan
 .warehouse-toolbar { display:flex; align-items:center; gap:16px; min-height:52px; margin-bottom:14px; }
 .warehouse-toolbar input, .detail-panel select { background:#081724; border:1px solid #29475e; color:#dcebf4; padding:10px 12px; min-width:280px; }
 .success { color:#64dda0; }
-.warehouse-layout { display:grid; grid-template-columns:230px minmax(520px,1fr) 270px; gap:14px; min-height:620px; }
+.warehouse-layout { display:grid; grid-template-columns:230px minmax(520px,1fr) 270px; gap:14px; height:clamp(360px,calc(100vh - 350px),720px); min-height:360px; }
 .waiting-panel,.shelf-canvas,.detail-panel { background:#091927dd; border:1px solid var(--line); padding:16px; }
 .waiting-panel header,.shelf-block header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
 .waiting-panel header span { color:var(--cyan); border:1px solid #27708b; padding:2px 8px; border-radius:10px; }
 .parcel-card { width:100%; text-align:left; color:#dcebf4; background:#10283a; border:1px solid #28506a; padding:12px; margin-bottom:8px; }
 .parcel-card:hover { border-color:var(--cyan); }
 .parcel-card small,.shelf-block small { display:block; color:#7690a2; margin-top:4px; }
-.shelf-canvas { overflow:auto; }
+.waiting-panel,.detail-panel { overflow-y:auto; }
+.shelf-canvas { height:100%; max-height:100%; overflow-x:auto; overflow-y:auto; overscroll-behavior:contain; scroll-behavior:auto; }
 .shelf-block { border:1px solid #294156; padding:14px; margin-bottom:14px; background:#0b1e2d; }
 .slot-grid { display:grid; grid-template-columns:repeat(6,minmax(90px,1fr)); gap:7px; }
 .slot { min-height:68px; border:1px solid #28475d; background:#0a1825; color:#7690a2; text-align:left; padding:7px; }

@@ -146,7 +146,7 @@
 
 ## V2 Phase 4 — 2D Warehouse 拖拽作业中心
 
-状态：`TODO`
+状态：`DONE`
 
 范围：
 

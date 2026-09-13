@@ -51,3 +51,27 @@ nav a:hover, nav a.router-link-active { color: #e7f8ff; border-color: var(--cyan
 .primary:disabled { opacity: .55; cursor: wait; }
 @media (max-width: 1366px) { .metrics { grid-template-columns: repeat(3, 1fr); } nav a { padding: 0 8px; } .brand { min-width: 210px; } .login-page { gap: 50px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+.warehouse-toolbar { display:flex; align-items:center; gap:16px; min-height:52px; margin-bottom:14px; }
+.warehouse-toolbar input, .detail-panel select { background:#081724; border:1px solid #29475e; color:#dcebf4; padding:10px 12px; min-width:280px; }
+.success { color:#64dda0; }
+.warehouse-layout { display:grid; grid-template-columns:230px minmax(520px,1fr) 270px; gap:14px; min-height:620px; }
+.waiting-panel,.shelf-canvas,.detail-panel { background:#091927dd; border:1px solid var(--line); padding:16px; }
+.waiting-panel header,.shelf-block header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.waiting-panel header span { color:var(--cyan); border:1px solid #27708b; padding:2px 8px; border-radius:10px; }
+.parcel-card { width:100%; text-align:left; color:#dcebf4; background:#10283a; border:1px solid #28506a; padding:12px; margin-bottom:8px; }
+.parcel-card:hover { border-color:var(--cyan); }
+.parcel-card small,.shelf-block small { display:block; color:#7690a2; margin-top:4px; }
+.shelf-canvas { overflow:auto; }
+.shelf-block { border:1px solid #294156; padding:14px; margin-bottom:14px; background:#0b1e2d; }
+.slot-grid { display:grid; grid-template-columns:repeat(6,minmax(90px,1fr)); gap:7px; }
+.slot { min-height:68px; border:1px solid #28475d; background:#0a1825; color:#7690a2; text-align:left; padding:7px; }
+.slot b { display:block; color:#aeefff; font-size:10px; overflow:hidden; text-overflow:ellipsis; }
+.slot.occupied { background:#123d59; border-color:#2f8eb4; }
+.slot.available { background:#123c2c; border-color:#4bd590; color:#77e6a1; }
+.slot.invalid,.slot.disabled { background:#321c24; border-color:#7b3944; color:#ff7d89; }
+.detail-panel h2 { font-size:19px; word-break:break-all; }
+.detail-panel dl { display:grid; grid-template-columns:75px 1fr; gap:10px; font-size:12px; }
+.detail-panel dt { color:#6e8799; }.detail-panel dd { margin:0; color:#d8e7f0; }
+.detail-panel label { display:block; color:#8198aa; font-size:12px; margin-top:24px; }.detail-panel select { display:block; width:100%; min-width:0; margin-top:7px; }
+.empty { color:#5f7789; padding:24px 5px; text-align:center; }
+@media(max-width:1366px){.warehouse-layout{grid-template-columns:200px minmax(500px,1fr) 230px}.slot-grid{grid-template-columns:repeat(5,minmax(80px,1fr))}}

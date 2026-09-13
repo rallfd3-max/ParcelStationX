@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import LoginView from '@/views/LoginView.vue'
 import DashboardView from '@/views/DashboardView.vue'
+import WarehouseView from '@/views/WarehouseView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
 export const router = createRouter({
@@ -10,7 +11,7 @@ export const router = createRouter({
     { path: '/login', name: 'login', component: LoginView, meta: { public: true } },
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', name: 'dashboard', component: DashboardView },
-    { path: '/warehouse', name: 'warehouse', component: PlaceholderView, props: { title: '仓库作业中心', phase: 'Phase 4' } },
+    { path: '/warehouse', name: 'warehouse', component: WarehouseView },
     { path: '/digital-twin', name: 'digital-twin', component: PlaceholderView, props: { title: '数字孪生', phase: 'Phase 5' } },
     { path: '/parcels', name: 'parcels', component: PlaceholderView, props: { title: '快件查询', phase: 'Phase 4' } },
     { path: '/exceptions', name: 'exceptions', component: PlaceholderView, props: { title: '异常件', phase: 'Phase 7' } },

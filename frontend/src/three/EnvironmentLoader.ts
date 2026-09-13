@@ -1,0 +1,1 @@
+import { Group,Mesh,MeshStandardMaterial,PlaneGeometry } from 'three'; export interface EnvironmentLoader{load():Promise<Group>} export class PrimitiveEnvironmentLoader implements EnvironmentLoader{async load(){const g=new Group(),floor=new Mesh(new PlaneGeometry(18,12),new MeshStandardMaterial({color:0x0c2230,roughness:.9}));floor.rotation.x=-Math.PI/2;g.add(floor);return g}}

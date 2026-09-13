@@ -182,7 +182,7 @@
 
 ## V2 Phase 5 — Three.js Digital Twin 基础
 
-状态：`TODO`
+状态：`DONE`
 
 范围：
 

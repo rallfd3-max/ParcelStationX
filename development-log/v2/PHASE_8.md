@@ -23,3 +23,11 @@
 ## 阻塞与恢复
 
 已备份并迁移本机数据库，seed 数量和占位一致性通过；应用内浏览器也已验证登录、Dashboard 与快速入库。剩余阻塞为 Chrome/Edge 完整拖拽、3D 与视觉链路证据，Phase 8 保持 IN_PROGRESS。
+
+## V2.1 Dashboard ECharts 路由生命周期修复
+
+- 根因：`DataChart.vue` 在 loading/empty 状态通过条件渲染卸载 ECharts 容器，实例仍绑定旧 DOM；返回首页自动刷新后，新 DOM 未获得重新初始化机会。
+- 修复：chart DOM 常驻，loading/empty 改为绝对定位 overlay；watch 使用 `flush: 'post'` 和 `nextTick`；实例按当前 DOM 校验并复用；增加容器级 `ResizeObserver`，卸载时完整 disconnect/cancel/dispose。
+- 自动测试：`npm run type-check` 通过；Vitest 13 files / 36 tests 通过；`npm run build` 通过；`mvn clean test` 37 tests 通过。
+- 浏览器：连续 5 轮完整路由往返，共 15 次返回首页，折线、饼/环形和柱状图的 canvas 每次均存在且尺寸非零；Console error/warn 为 0，无需 F5。
+- Phase 8 仍保持 `IN_PROGRESS`，原因不变：当前没有可用 Chrome/Edge 控制端完成最终指定浏览器全链路。

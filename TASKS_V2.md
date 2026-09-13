@@ -224,7 +224,7 @@
 
 ## V2 Phase 6 — 3D Drag / Snap / 2D-3D 同步
 
-状态：`TODO`
+状态：`DONE`
 
 范围：
 

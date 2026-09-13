@@ -1,0 +1,2 @@
+import { describe,expect,it } from 'vitest';import { idleDragState,startDrag,submitDrag,targetDrag } from './dragState'
+describe('3d drag state',()=>{it('accepts only a valid slot before pending',()=>{const dragging=startDrag(7);expect(submitDrag(dragging).phase).toBe('rolling-back');const valid=targetDrag(dragging,12,true);expect(submitDrag(valid)).toMatchObject({phase:'pending',parcelId:7,targetSlotId:12})});it('keeps idle state immutable',()=>{const idle=idleDragState();expect(targetDrag(idle,1,true)).toBe(idle)})})

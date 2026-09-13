@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick,onBeforeUnmount,onMounted,ref,watch } from 'vue';import { useWarehouseStore } from '@/stores/warehouse';import { WarehouseScene } from '@/three/WarehouseScene'
 const store=useWarehouseStore(),canvas=ref<HTMLElement>(),search=ref('');let scene:WarehouseScene|undefined
-async function mount(){if(!store.snapshot)await store.refresh();await nextTick();if(canvas.value&&store.snapshot){scene?.dispose();scene=new WarehouseScene(canvas.value,store.snapshot,id=>{store.selectParcel(id);focus(id)})}}
+async function mount(){if(!store.snapshot)await store.refresh();await nextTick();if(canvas.value&&store.snapshot){scene?.dispose();scene=new WarehouseScene(canvas.value,store.snapshot,id=>{store.selectParcel(id);focus(id)},(parcelId,slotId)=>store.relocate(parcelId,slotId,'3d drag and snap'))}}
 function focus(id:number){const p=store.snapshot?.parcels.find(x=>x.id===id);if(p?.slotId)scene?.camera.focusParcel(p.slotId)}
 function find(){const p=store.snapshot?.parcels.find(x=>x.trackingNo.toLowerCase().includes(search.value.toLowerCase()));if(p){store.selectParcel(p.id);focus(p.id)}}
 onMounted(mount);watch(()=>store.lastSyncAt,mount);onBeforeUnmount(()=>scene?.dispose())

@@ -8,7 +8,7 @@ Status: DONE
 Fix the 2D warehouse so the center shelf canvas has its own vertical scroll viewport. Add drag-edge auto-scroll near the top/bottom edge, cleanup on drop/dragend/cancel, keep 409 rollback, and keep the non-drag “move to slot” fallback. Acceptance: at 1366x768 a waiting parcel can be dragged to the lowest visible/previously off-screen empty slot and remains there after refresh.
 
 ## Phase B — Expanded Warehouse & 3D Scene
-Status: TODO
+Status: DONE
 
 Add a safe incremental V2.1 migration. Expand demo/business layout to eight real shelves: A-01/A-02/B-01/B-02/C-01/C-02/D-01/D-02, about 240 slots total, without deleting existing parcels. Arrange real ShelfLayout records into zones and aisles. Add staging/pickup areas and improve reset/front/top camera framing for all layouts. Do not fake business shelves only in Three.js.
 

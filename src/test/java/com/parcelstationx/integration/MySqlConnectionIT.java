@@ -59,7 +59,11 @@ class MySqlConnectionIT {
           assertEquals(rows.getInt(3), rows.getInt(2));
           index++;
         }
-        assertEquals(3, index);
+        assertEquals(8, index, "V2.1 migration must expose all eight business shelves");
+      }
+      try (var rows = connection.createStatement().executeQuery("SELECT COUNT(*) FROM shelf_slots")) {
+        rows.next();
+        assertTrue(rows.getInt(1) >= 240, "V2.1 migration must expose at least 240 real slots");
       }
       try (var rows =
           connection

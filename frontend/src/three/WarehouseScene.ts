@@ -9,6 +9,7 @@ import { buildShelf } from './ShelfBuilder'
 import { SceneIndex } from './SceneIndex'
 import { buildSlot } from './SlotBuilder'
 import { WarehouseRenderer } from './WarehouseRenderer'
+import { buildOperationalAreas } from './OperationalAreas'
 
 export class WarehouseScene {
   readonly index = new SceneIndex()
@@ -29,6 +30,7 @@ export class WarehouseScene {
     this.drag = new DragController(this.renderer.renderer.domElement, this.renderer.camera, this.controls, this.index, (slotId,parcelId) => this.isAvailable(slotId,parcelId), relocate, select)
     this.scene.add(new AmbientLight(0x9bc7dc, 1.5))
     const light = new DirectionalLight(0xffffff, 2); light.position.set(5,10,7); this.scene.add(light)
+    this.scene.add(buildOperationalAreas())
     void this.build()
     this.resize = new ResizeObserver(() => this.renderer.resize(container.clientWidth, container.clientHeight))
     this.resize.observe(container); this.loop()
@@ -39,6 +41,7 @@ export class WarehouseScene {
     for (const shelf of this.data.shelves) { const layout=this.data.layouts.find(x=>x.shelfId===shelf.id); if(layout)this.scene.add(buildShelf(shelf,layout,this.index)) }
     for (const slot of this.data.slots) { const layout=this.data.layouts.find(x=>x.shelfId===slot.shelfId); if(layout)this.scene.add(buildSlot(slot,layout,this.index)) }
     for (const parcel of this.data.parcels) { const slot=this.data.slots.find(x=>x.id===parcel.slotId),layout=slot&&this.data.layouts.find(x=>x.shelfId===slot.shelfId); if(slot&&layout&&parcel.status!=='PICKED_UP')this.scene.add(buildParcel(parcel,slot,layout,this.index)) }
+    this.camera.resetCamera()
   }
   private loop=()=>{this.controls.update();this.renderer.renderer.render(this.scene,this.renderer.camera);this.frame=requestAnimationFrame(this.loop)}
   dispose(){cancelAnimationFrame(this.frame);this.camera.cancelAnimation();this.drag.dispose();this.resize.disconnect();this.controls.dispose();this.scene.traverse(object=>{const mesh=object as any;mesh.geometry?.dispose?.();if(Array.isArray(mesh.material))mesh.material.forEach((material:any)=>material.dispose());else mesh.material?.dispose?.()});this.index.clear();this.renderer.dispose()}

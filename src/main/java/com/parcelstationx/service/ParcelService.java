@@ -55,16 +55,14 @@ public final class ParcelService {
                   customers.findByMobile(connection, request.customerMobile()).stream()
                       .findFirst()
                       .orElseThrow(() -> new BusinessException("未找到匹配客户。"));
-              Shelf shelf =
-                  request.shelfId() == null
-                      ? shelves
-                          .findAvailable(connection)
-                          .orElseThrow(() -> new BusinessException("没有可用货架。"))
-                      : shelves
-                          .findById(connection, request.shelfId())
-                          .orElseThrow(() -> new BusinessException("货架不存在。"));
-              if (shelf.status() != ShelfStatus.ACTIVE || shelf.occupied() >= shelf.capacity()) {
-                throw new BusinessException("货架已停用或已满。");
+              if (request.shelfId() != null) {
+                Shelf requestedShelf =
+                    shelves
+                        .findById(connection, request.shelfId())
+                        .orElseThrow(() -> new BusinessException("货架不存在。"));
+                if (requestedShelf.status() != ShelfStatus.ACTIVE) {
+                  throw new BusinessException("货架已停用。");
+                }
               }
               LocalDateTime now = LocalDateTime.now(clock);
               String code =
@@ -82,7 +80,7 @@ public final class ParcelService {
                           request.trackingNo(),
                           request.courierCompany(),
                           customer.id(),
-                          shelf.id(),
+                          null,
                           code,
                           ParcelStatus.IN_STOCK,
                           now,
@@ -90,17 +88,9 @@ public final class ParcelService {
                           request.operatorId(),
                           request.remark(),
                           now,
-                          now));
-              shelves.save(
-                  connection,
-                  new Shelf(
-                      shelf.id(),
-                      shelf.shelfCode(),
-                      shelf.zone(),
-                      shelf.capacity(),
-                      shelf.occupied() + 1,
-                      shelf.status(),
-                      shelf.createdAt()));
+                          now,
+                          null,
+                          0L));
               events.save(
                   connection,
                   new ParcelEvent(
@@ -138,9 +128,11 @@ public final class ParcelService {
                   .orElseThrow(() -> new BusinessException("取件码不存在。"));
           states.requireTransition(parcel.status(), ParcelStatus.PICKED_UP);
           Shelf shelf =
-              shelves
-                  .findById(connection, parcel.shelfId())
-                  .orElseThrow(() -> new BusinessException("货架不存在。"));
+              parcel.shelfId() == null
+                  ? null
+                  : shelves
+                      .findById(connection, parcel.shelfId())
+                      .orElseThrow(() -> new BusinessException("货架不存在。"));
           LocalDateTime now = LocalDateTime.now(clock);
           Parcel picked =
               parcels.save(
@@ -158,17 +150,21 @@ public final class ParcelService {
                       parcel.operatorId(),
                       parcel.remark(),
                       parcel.createdAt(),
-                      now));
-          shelves.save(
-              connection,
-              new Shelf(
-                  shelf.id(),
-                  shelf.shelfCode(),
-                  shelf.zone(),
-                  shelf.capacity(),
-                  Math.max(0, shelf.occupied() - 1),
-                  shelf.status(),
-                  shelf.createdAt()));
+                      now,
+                      null,
+                      parcel.version() + 1));
+          if (shelf != null && parcel.slotId() != null) {
+            shelves.save(
+                connection,
+                new Shelf(
+                    shelf.id(),
+                    shelf.shelfCode(),
+                    shelf.zone(),
+                    shelf.capacity(),
+                    Math.max(0, shelf.occupied() - 1),
+                    shelf.status(),
+                    shelf.createdAt()));
+          }
           events.save(
               connection,
               new ParcelEvent(

@@ -7,7 +7,9 @@ import com.parcelstationx.api.error.BadRequestException;
 
 public final class JsonCodec {
   private final ObjectMapper mapper =
-      new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+      new ObjectMapper()
+          .findAndRegisterModules()
+          .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
   public <T> T read(String json, Class<T> type) {
     try {

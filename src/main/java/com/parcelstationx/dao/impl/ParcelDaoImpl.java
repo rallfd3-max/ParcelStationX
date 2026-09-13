@@ -8,20 +8,20 @@ import java.util.Optional;
 
 public final class ParcelDaoImpl extends AbstractJdbcDao<Parcel> implements ParcelDao {
   private static final String COLUMNS =
-      "id,tracking_no,courier_company,customer_id,shelf_id,pickup_code,status,arrived_at,picked_up_at,operator_id,remark,created_at,updated_at";
+      "id,tracking_no,courier_company,customer_id,shelf_id,pickup_code,status,arrived_at,picked_up_at,operator_id,remark,created_at,updated_at,slot_id,version";
 
   public ParcelDaoImpl(ConnectionProvider c) {
     super(
         c,
-        "INSERT INTO parcels(tracking_no,courier_company,customer_id,shelf_id,pickup_code,status,arrived_at,picked_up_at,operator_id,remark,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-        "UPDATE parcels SET tracking_no=?,courier_company=?,customer_id=?,shelf_id=?,pickup_code=?,status=?,arrived_at=?,picked_up_at=?,operator_id=?,remark=?,created_at=?,updated_at=? WHERE id=?",
+        "INSERT INTO parcels(tracking_no,courier_company,customer_id,shelf_id,pickup_code,status,arrived_at,picked_up_at,operator_id,remark,created_at,updated_at,slot_id,version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "UPDATE parcels SET tracking_no=?,courier_company=?,customer_id=?,shelf_id=?,pickup_code=?,status=?,arrived_at=?,picked_up_at=?,operator_id=?,remark=?,created_at=?,updated_at=?,slot_id=?,version=? WHERE id=?",
         "SELECT " + COLUMNS + " FROM parcels ORDER BY id",
         "SELECT " + COLUMNS + " FROM parcels WHERE id=?",
         "DELETE FROM parcels WHERE id=?",
         ParcelDaoImpl::bind,
         (s, v) -> {
           bind(s, v);
-          s.setLong(13, v.id());
+          s.setLong(15, v.id());
         },
         ParcelDaoImpl::map);
   }
@@ -54,6 +54,40 @@ public final class ParcelDaoImpl extends AbstractJdbcDao<Parcel> implements Parc
   }
 
   @Override
+  public Optional<Parcel> findBySlotId(java.sql.Connection connection, long slotId) {
+    return queryOne(
+        connection,
+        "SELECT "
+            + COLUMNS
+            + " FROM parcels WHERE slot_id=? AND status IN ('IN_STOCK','EXCEPTION')",
+        (s, v) -> s.setLong(1, slotId));
+  }
+
+  public Optional<Parcel> findByIdForUpdate(java.sql.Connection connection, long id) {
+    return queryOne(
+        connection,
+        "SELECT " + COLUMNS + " FROM parcels WHERE id=? FOR UPDATE",
+        (s, v) -> s.setLong(1, id));
+  }
+
+  @Override
+  public boolean assignSlot(
+      java.sql.Connection connection, long parcelId, Long shelfId, Long slotId, long version) {
+    try (var statement =
+        connection.prepareStatement(
+            "UPDATE parcels SET shelf_id=?,slot_id=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND version=?")) {
+      JdbcValues.nullableLong(statement, 1, shelfId);
+      JdbcValues.nullableLong(statement, 2, slotId);
+      statement.setLong(3, parcelId);
+      statement.setLong(4, version);
+      return statement.executeUpdate() == 1;
+    } catch (java.sql.SQLException exception) {
+      throw new com.parcelstationx.exception.DatabaseException(
+          "Parcel slot update failed.", exception);
+    }
+  }
+
+  @Override
   protected Long idOf(Parcel v) {
     return v.id();
   }
@@ -73,7 +107,9 @@ public final class ParcelDaoImpl extends AbstractJdbcDao<Parcel> implements Parc
         v.operatorId(),
         v.remark(),
         v.createdAt(),
-        v.updatedAt());
+        v.updatedAt(),
+        v.slotId(),
+        v.version());
   }
 
   private static Parcel map(java.sql.ResultSet r) throws java.sql.SQLException {
@@ -90,7 +126,9 @@ public final class ParcelDaoImpl extends AbstractJdbcDao<Parcel> implements Parc
         r.getLong("operator_id"),
         r.getString("remark"),
         JdbcValues.time(r, "created_at"),
-        JdbcValues.time(r, "updated_at"));
+        JdbcValues.time(r, "updated_at"),
+        JdbcValues.nullableLong(r, "slot_id"),
+        r.getLong("version"));
   }
 
   private static void bind(java.sql.PreparedStatement s, Parcel v) throws java.sql.SQLException {
@@ -106,5 +144,7 @@ public final class ParcelDaoImpl extends AbstractJdbcDao<Parcel> implements Parc
     s.setString(10, v.remark());
     JdbcValues.time(s, 11, v.createdAt());
     JdbcValues.time(s, 12, v.updatedAt());
+    JdbcValues.nullableLong(s, 13, v.slotId());
+    s.setLong(14, v.version());
   }
 }

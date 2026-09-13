@@ -1,16 +1,14 @@
 package com.parcelstationx.api.http;
 
 import com.parcelstationx.api.auth.SessionManager;
-import com.parcelstationx.api.dto.LoginRequest;
-import com.parcelstationx.api.dto.LoginResponse;
-import com.parcelstationx.api.dto.ParcelDto;
-import com.parcelstationx.api.dto.UserDto;
+import com.parcelstationx.api.dto.*;
 import com.parcelstationx.api.error.BadRequestException;
 import com.parcelstationx.api.error.HttpErrorException;
 import com.parcelstationx.api.json.JsonCodec;
 import com.parcelstationx.dao.ParcelDao;
+import com.parcelstationx.dao.ParcelRelocationDao;
 import com.parcelstationx.model.UserRole;
-import com.parcelstationx.service.AuthenticationService;
+import com.parcelstationx.service.*;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -28,9 +26,22 @@ public final class ApiServer implements AutoCloseable {
       ParcelDao parcels,
       SessionManager sessions)
       throws IOException {
+    this(address, authentication, parcels, sessions, null, null, null);
+  }
+
+  public ApiServer(
+      InetSocketAddress address,
+      AuthenticationService authentication,
+      ParcelDao parcels,
+      SessionManager sessions,
+      WarehouseLayoutService warehouse,
+      RelocationService relocationService,
+      ParcelRelocationDao relocations)
+      throws IOException {
     JsonCodec json = new JsonCodec();
     Router router = new Router(json, sessions);
-    registerRoutes(router, json, authentication, parcels, sessions);
+    registerRoutes(
+        router, json, authentication, parcels, sessions, warehouse, relocationService, relocations);
     server = HttpServer.create(address, 0);
     executor =
         Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
@@ -43,7 +54,10 @@ public final class ApiServer implements AutoCloseable {
       JsonCodec json,
       AuthenticationService authentication,
       ParcelDao parcels,
-      SessionManager sessions) {
+      SessionManager sessions,
+      WarehouseLayoutService warehouse,
+      RelocationService relocationService,
+      ParcelRelocationDao relocations) {
     router.add(new Route("GET", "/api/health", false, null, context -> Map.of("status", "UP")));
     router.add(
         new Route(
@@ -62,8 +76,7 @@ public final class ApiServer implements AutoCloseable {
                 throw new HttpErrorException(401, "用户名或密码错误。", "INVALID_CREDENTIALS");
               }
             }));
-    router.add(
-        new Route("GET", "/api/auth/me", true, null, context -> UserDto.from(context.user())));
+    router.add(new Route("GET", "/api/auth/me", true, null, c -> UserDto.from(c.user())));
     router.add(
         new Route(
             "POST",
@@ -87,21 +100,54 @@ public final class ApiServer implements AutoCloseable {
             "/api/parcels/{id}",
             true,
             null,
-            context -> {
-              long id;
-              try {
-                id = Long.parseLong(context.pathParameter("id"));
-              } catch (NumberFormatException exception) {
-                throw new BadRequestException("快件 ID 格式错误。", "INVALID_ID");
-              }
-              return parcels
-                  .findById(id)
-                  .map(ParcelDto::from)
-                  .orElseThrow(() -> new HttpErrorException(404, "快件不存在。", "PARCEL_NOT_FOUND"));
-            }));
+            context ->
+                parcels
+                    .findById(parseId(context.pathParameter("id")))
+                    .map(ParcelDto::from)
+                    .orElseThrow(() -> new HttpErrorException(404, "快件不存在。", "PARCEL_NOT_FOUND"))));
     router.add(
-        new Route(
-            "GET", "/api/admin/ping", true, UserRole.ADMIN, context -> Map.of("status", "UP")));
+        new Route("GET", "/api/admin/ping", true, UserRole.ADMIN, c -> Map.of("status", "UP")));
+
+    if (warehouse != null && relocationService != null && relocations != null) {
+      router.add(
+          new Route(
+              "GET", "/api/warehouse", true, null, c -> WarehouseDto.from(warehouse.snapshot())));
+      router.add(
+          new Route(
+              "POST",
+              "/api/parcels/{id}/relocate",
+              true,
+              null,
+              context -> {
+                RelocateRequest request = json.read(context.body(), RelocateRequest.class);
+                if (request.targetSlotId() == null || request.expectedVersion() == null) {
+                  throw new BadRequestException(
+                      "targetSlotId 和 expectedVersion 必填。", "MISSING_FIELD");
+                }
+                return RelocateResponse.from(
+                    relocationService.relocate(
+                        parseId(context.pathParameter("id")),
+                        request.targetSlotId(),
+                        request.expectedVersion(),
+                        request.reason(),
+                        context.user().id()));
+              }));
+      router.add(
+          new Route(
+              "GET",
+              "/api/parcels/{id}/relocations",
+              true,
+              null,
+              context -> relocations.findByParcelId(parseId(context.pathParameter("id")))));
+    }
+  }
+
+  private static long parseId(String value) {
+    try {
+      return Long.parseLong(value);
+    } catch (NumberFormatException exception) {
+      throw new BadRequestException("ID 格式错误。", "INVALID_ID");
+    }
   }
 
   public void start() {

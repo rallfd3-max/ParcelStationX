@@ -69,7 +69,7 @@
 
 ## V2 Phase 2 — ShelfLayout / Slot / Relocation 数据模型与事务
 
-状态：`TODO`
+状态：`DONE`
 
 范围：
 

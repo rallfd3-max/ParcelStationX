@@ -50,7 +50,9 @@ public final class ExceptionService {
                   p.operatorId(),
                   p.remark(),
                   p.createdAt(),
-                  now));
+                  now,
+                  p.slotId(),
+                  p.version() + 1));
           ExceptionRecord r =
               exceptions.save(
                   c,
@@ -99,7 +101,9 @@ public final class ExceptionService {
                   p.operatorId(),
                   p.remark(),
                   p.createdAt(),
-                  now));
+                  now,
+                  p.slotId(),
+                  p.version() + 1));
           ExceptionRecord done =
               new ExceptionRecord(
                   r.id(),

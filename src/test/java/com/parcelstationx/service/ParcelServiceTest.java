@@ -36,7 +36,7 @@ class ParcelServiceTest {
       s.execute(
           "CREATE TABLE shelves(id BIGINT AUTO_INCREMENT PRIMARY KEY,shelf_code VARCHAR(30),zone_name VARCHAR(30),capacity INT,occupied INT,status VARCHAR(20),created_at TIMESTAMP)");
       s.execute(
-          "CREATE TABLE parcels(id BIGINT AUTO_INCREMENT PRIMARY KEY,tracking_no VARCHAR(100) UNIQUE,courier_company VARCHAR(50),customer_id BIGINT,shelf_id BIGINT,pickup_code VARCHAR(20),status VARCHAR(30),arrived_at TIMESTAMP,picked_up_at TIMESTAMP,operator_id BIGINT,remark VARCHAR(255),created_at TIMESTAMP,updated_at TIMESTAMP)");
+          "CREATE TABLE parcels(id BIGINT AUTO_INCREMENT PRIMARY KEY,tracking_no VARCHAR(100) UNIQUE,courier_company VARCHAR(50),customer_id BIGINT,shelf_id BIGINT,pickup_code VARCHAR(20),status VARCHAR(30),arrived_at TIMESTAMP,picked_up_at TIMESTAMP,operator_id BIGINT,remark VARCHAR(255),created_at TIMESTAMP,updated_at TIMESTAMP,slot_id BIGINT UNIQUE,version BIGINT DEFAULT 0)");
       s.execute(
           "CREATE TABLE parcel_events(id BIGINT AUTO_INCREMENT PRIMARY KEY,parcel_id BIGINT,event_type VARCHAR(30),from_status VARCHAR(30),to_status VARCHAR(30),operator_id BIGINT,description VARCHAR(255),created_at TIMESTAMP)");
       s.execute(
@@ -59,7 +59,9 @@ class ParcelServiceTest {
   void inboundAndOutboundUpdateAllRecords() {
     Parcel stored =
         service.inbound(new InboundRequest("TRACK-001", "SF", "13800000000", null, 1L, ""));
-    assertEquals(1, shelves.findById(1L).orElseThrow().occupied());
+    assertNull(stored.slotId());
+    assertNull(stored.shelfId());
+    assertEquals(0, shelves.findById(1L).orElseThrow().occupied());
     assertEquals(1, events.findByParcelId(stored.id()).size());
     assertEquals(1, logs.findAll().size());
     Parcel picked = service.outbound(stored.pickupCode(), 1L);
@@ -71,15 +73,25 @@ class ParcelServiceTest {
   }
 
   @Test
-  void rejectsDuplicateFullShelfInvalidAndDuplicatePickup() {
+  void rejectsDuplicateDisabledShelfInvalidAndDuplicatePickup() {
     Parcel stored =
         service.inbound(new InboundRequest("TRACK-002", "SF", "13800000000", null, 1L, ""));
     assertThrows(
         BusinessException.class,
         () -> service.inbound(new InboundRequest("TRACK-002", "SF", "13800000000", null, 1L, "")));
+    Shelf shelf = shelves.findById(1L).orElseThrow();
+    shelves.save(
+        new Shelf(
+            shelf.id(),
+            shelf.shelfCode(),
+            shelf.zone(),
+            shelf.capacity(),
+            shelf.occupied(),
+            ShelfStatus.DISABLED,
+            shelf.createdAt()));
     assertThrows(
         BusinessException.class,
-        () -> service.inbound(new InboundRequest("TRACK-003", "SF", "13800000000", null, 1L, "")));
+        () -> service.inbound(new InboundRequest("TRACK-003", "SF", "13800000000", 1L, 1L, "")));
     assertThrows(BusinessException.class, () -> service.outbound("bad", 1L));
     service.outbound(stored.pickupCode(), 1L);
     assertThrows(BusinessException.class, () -> service.outbound(stored.pickupCode(), 1L));

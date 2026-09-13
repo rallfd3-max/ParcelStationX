@@ -12,7 +12,9 @@ public record ParcelDto(
     String arrivedAt,
     String pickedUpAt,
     Long operatorId,
-    String remark) {
+    String remark,
+    Long slotId,
+    long version) {
   public static ParcelDto from(Parcel parcel) {
     return new ParcelDto(
         parcel.id(),
@@ -24,6 +26,8 @@ public record ParcelDto(
         parcel.arrivedAt().toString(),
         parcel.pickedUpAt() == null ? null : parcel.pickedUpAt().toString(),
         parcel.operatorId(),
-        parcel.remark());
+        parcel.remark(),
+        parcel.slotId(),
+        parcel.version());
   }
 }

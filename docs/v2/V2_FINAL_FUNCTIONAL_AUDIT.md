@@ -12,12 +12,16 @@
 | `/digital-twin` | `DigitalTwinView` | warehouse/relocate API | 完整 |
 | `/parcels` | `ParcelsView` | parcel-details/events/relocations API | 已补齐 |
 | `/exceptions` | `ExceptionsView` | exception create/list/resolve API | 已补齐 |
-| `/analytics` | `AnalyticsView` | dashboard API | 完整 |
+| `/analytics` | 重定向 `/dashboard#analytics` | dashboard analytics API | 已合并到首页 |
 | `/settings` | `SettingsView` | admin users/layout/slots API | 已补齐，ADMIN only |
 
 正式路由已不再引用 `PlaceholderView.vue`，该文件已删除。STAFF 菜单不显示 Settings，前端路由守卫会重定向，所有 admin API 还会独立返回 403，权限不依赖菜单隐藏。
 
 ## 新增功能核对
+
+- V2.1 首页合并原 Dashboard/Analytics，使用三组 Java 统计 API 展示 14 天趋势、六类分布/利用率和最近活动。
+- 真实仓库扩展为八架、240 个仓位；二维画布独立滚动并支持边缘自动滚动。
+- 3D 增加入库暂存/取件区、hover tooltip、暂存快件渲染、快速入库和两步确认出库。
 
 - 快件中心支持运单/取件码/客户搜索，以及状态、快递、货架、仓位过滤；显示脱敏手机、停留时间、事件和换位历史，并可携带 `parcelId` 定位 2D/3D。
 - Digital Twin 读取 route query，设置共享 `selectedParcelId` 并调用 `focusParcel`；Warehouse 同样读取 query 选择快件。
@@ -38,4 +42,4 @@
 
 ## 仍需外部验收
 
-真实 MySQL migration/schema/seed 与非 skipped integration profile 已通过。应用内浏览器已验证登录、Dashboard 真实指标和 Web 快速入库；Chrome/Edge 的完整交互与视觉验收仍未全部执行，因此 Phase 8 保持 `IN_PROGRESS`。
+真实 MySQL migration/schema/seed 与非 skipped integration profile 已通过。应用内浏览器已验证登录、真实首页、Web 快速入库、底部仓位持久化、3D 暂存详情/出库、三档分辨率及十次 3D 生命周期；Chrome/Edge 的完整 WebGL 拖拽验收仍未执行，因此原 V2 Phase 8 保持 `IN_PROGRESS`。

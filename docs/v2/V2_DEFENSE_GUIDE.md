@@ -12,4 +12,4 @@
 4. 认证使用 SecureRandom bearer token、角色守卫和统一错误响应。
 5. 按 `V2_TECHNOLOGY_TRACEABILITY.md` 定位五项课程技术。
 
-常见问答：不用 Spring 是课程约束且便于展示底层能力；并发抢位由数据库约束、事务和版本控制共同处理；GLB 失败会降级为程序化几何体。当前真实 MySQL 与浏览器证据缺失，所以 Phase 8 如实保持进行中。
+常见问答：不用 Spring 是课程约束且便于展示底层能力；并发抢位由数据库约束、事务和版本控制共同处理；GLB 失败会降级为程序化几何体。V2.1 的八组业务货架全部来自 Shelf/ShelfLayout/ShelfSlot/MySQL，前端没有复制假货架；首页趋势和分布也来自 Java Service/DAO 数据。真实 MySQL 和应用内浏览器已有证据，但 Chrome/Edge WebGL 拖拽仍需人工验收，所以原 V2 Phase 8 如实保持进行中。

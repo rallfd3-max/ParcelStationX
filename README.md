@@ -1,4 +1,4 @@
-# ParcelStationX Digital Twin v2.0
+# ParcelStationX Digital Twin v2.1
 
 ParcelStationX 是《软件设计与开发 II》课程项目。V2 在原 Swing/JDBC 系统上增加 Java 17 `HttpServer` REST API，以及 Vue 3、TypeScript、ECharts、Three.js 数字孪生前端。生产代码不使用 Spring、ORM 或 Lombok。
 
@@ -11,7 +11,7 @@ src/main/resources/db/schema.sql
 src/main/resources/db/seed.sql
 ```
 
-从 V1 升级时，先备份数据库，再依次执行原 V1 schema、`src/main/resources/db/migration/V2_0_1__digital_twin_layout.sql` 和 `seed.sql`。
+从 V1 升级时，先备份数据库，再依次执行原 V1 schema、`src/main/resources/db/migration/V2_0_1__digital_twin_layout.sql`、`seed.sql` 和 `src/main/resources/db/migration/V2_1_0__expand_demo_warehouse.sql`。V2.1 迁移可重复执行，不删除已有快件，并扩展为八组货架、240 个真实仓位。
 
 复制 `application.example.properties` 为不提交的 `application.properties`，或设置 `PARCEL_DB_URL`、`PARCEL_DB_USERNAME`、`PARCEL_DB_PASSWORD`。
 
@@ -35,5 +35,7 @@ npm run build
 ```
 
 MySQL 集成测试仅在三个 `PARCEL_DB_*` 变量齐全时执行；缺失时会跳过，不能视为真实 MySQL 验收通过。最终链路见 `docs/v2/V2_DEMO_SCRIPT.md`，状态见 `docs/v2/V2_TEST_REPORT.md`，课程技术点见 `docs/v2/V2_TECHNOLOGY_TRACEABILITY.md`。
+
+V2.1 首页已合并运营分析，数字孪生支持暂存区快速入库、hover 详情、3D 换位和取件码确认出库；二维仓库支持独立滚动区和拖拽边缘自动滚动。
 
 核心调用方向：`UI/Web -> Service -> DAO -> JDBC -> MySQL`。

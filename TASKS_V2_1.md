@@ -23,6 +23,6 @@ Status: DONE
 Rename “驾驶舱” to “首页”, remove the separate analytics navigation item, redirect /analytics to /dashboard#analytics, and rebuild Dashboard as a vertically scrollable operations home. Add real ECharts sections for inbound/outbound trends, inventory trend, courier/status/exception distributions, shelf/zone utilization, dwell distribution, recent exceptions and recent operations. Add real Java dashboard trend/distribution/activity APIs and keep SQL in DAO/service layers.
 
 ## Phase E — Full Regression
-Status: TODO
+Status: DONE
 
 Run Java regression, frontend type-check/tests/build, MySQL integration when available, browser checks at 1366x768/1440x900/1920x1080, bottom-slot drag, expanded 3D overview, hover tooltip, 3D inbound/staging/relocate/outbound, long-scroll home, charts, rollback cases and repeated Three.js mount/dispose. Update docs. Keep original V2 Phase 8 IN_PROGRESS until real MySQL/browser acceptance is genuinely complete.

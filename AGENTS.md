@@ -1,41 +1,38 @@
-# AGENTS.md — Codex 自动开发总规则
+# AGENTS.md — ParcelStationX Codex 自动开发总规则
 
-你正在开发《软件设计与开发 II》课程大作业 **ParcelStationX**。
+你正在维护《软件设计与开发 II》课程项目 **ParcelStationX**。
 
-## 一、最高优先级约束
+## A. 当前分支优先规则
 
-### 1. 禁止一次性开发完整项目
+如果当前分支是 `codex/visualization-v2`，则 **V2 规则优先于旧版 Phase 0–9 规则**。
 
-必须严格按 `TASKS.md` 的 Phase 0 → Phase 9 顺序执行。
+V2 开始工作前必须读取：
 
-每一阶段必须形成以下闭环：
+1. `docs/v2/00_READ_FIRST.md`
+2. `docs/v2/01_PROJECT_PLAN.md`
+3. `docs/v2/02_FEASIBILITY_ANALYSIS.md`
+4. `docs/v2/03_ARCHITECTURE.md`
+5. `docs/v2/04_UI_UX_SPEC.md`
+6. `docs/v2/05_DIGITAL_TWIN_3D_SPEC.md`
+7. `docs/v2/06_DATABASE_API_SPEC.md`
+8. `docs/v2/07_TEST_ACCEPTANCE.md`
+9. `TASKS_V2.md`
+10. `CODEX_V2_MASTER_PROMPT.md`
 
-- 读取阶段要求
-- 实现本阶段
-- 编译
-- 测试
-- 修复
-- 更新 TASKS.md
-- 更新必要文档
-- Git commit
-- 自动进入下一阶段
+在 `codex/visualization-v2` 上，旧的 `TASKS.md` 仅作为 legacy V1 历史，不得把它当作当前开发任务。
 
-不得在 Phase 2 时提前批量实现 Phase 6、Phase 7 的完整功能。
+### V2 最重要规则
 
-### 2. 不需要人工反复说“继续”
+- **一次 Codex 运行只完成一个 V2 Phase。**
+- 找到 `TASKS_V2.md` 中编号最小的 TODO/IN_PROGRESS Phase，只实现它。
+- 当前 Phase 完成：实现 → 编译/类型检查 → 测试 → 修复 → 再测试 → 阶段日志 → 更新状态 → 独立 commit → push → 停止。
+- 禁止在同一次运行继续下一 Phase。
+- 真实环境不足时可保持 IN_PROGRESS，但禁止虚假 DONE。
+- 禁止直接修改/合并 main。
 
-只要没有以下阻塞，就自动进入下一 Phase：
+## B. 后端课程约束
 
-- 关键需求矛盾且无法依据仓库文档判断；
-- 缺失数据库环境并且无法使用项目提供的配置继续完成不依赖数据库的工作；
-- 文件权限/系统权限阻止必要操作；
-- 编译器、JDK、Maven 等基础工具完全不存在。
-
-普通 BUG、测试失败、代码设计问题不属于阻塞，必须自行修复。
-
-### 3. 不得使用业务框架
-
-生产代码禁止：
+生产 Java 代码禁止：
 
 - Spring / SpringBoot
 - Struts
@@ -50,128 +47,106 @@
 允许：
 
 - Java 17 标准库
-- Swing
+- Swing legacy
+- `com.sun.net.httpserver.HttpServer`
 - JDBC
 - MySQL Connector/J
 - Maven
-- JUnit 5（仅测试）
+- JUnit 5（测试）
+- V2 所需轻量 JSON 库
 
-## 二、课程技术点必须真实可答辩
+现有业务必须保持：
 
-最终必须明确实现并能定位代码：
+`UI/API -> Service -> DAO -> JDBC -> MySQL`
 
-1. 集合
-2. 泛型
-3. 序列化
-4. 多线程
-5. 数据库编程
+API handler 和 Vue 都不得直接写 SQL。
 
-禁止为了“凑技术点”写无意义代码。
+## C. V2 前端允许技术
 
-每个技术点在 `docs/03_REQUIREMENTS_TRACEABILITY.md` 中必须登记：
+- Vue 3
+- TypeScript
+- Vite
+- Vue Router
+- Pinia
+- Three.js
+- Apache ECharts
+- Vitest
+- 必要的轻量 UI/CSS 工具
 
-- 使用位置
-- 类名
-- 方法
-- 业务价值
-- 答辩解释
+最终视觉必须自行设计成工业数字孪生风格，禁止把 UI 库默认后台模板当成最终交付。
 
-## 三、架构规则
+## D. 稳定基线保护
 
-推荐包结构：
+V2 基线来自 commit `c7bf559`。
 
-```text
-com.parcelstationx
-├── app
-├── config
-├── model
-├── dao
-│   └── impl
-├── service
-│   └── impl
-├── ui
-│   ├── frame
-│   ├── panel
-│   ├── dialog
-│   └── component
-├── task
-├── backup
-├── util
-└── exception
-```
+必须保留并复用：
 
-必须保持：
+- model / dao / service / transaction；
+- 登录、入出库、异常、通知、统计、备份；
+- MySQL schema/seed；
+- Swing UI；
+- 原有测试。
 
-`UI -> Service -> DAO -> JDBC -> MySQL`
+除非当前 Phase 有明确迁移理由，否则禁止大规模重写已经稳定的类。
 
-UI 层不得直接写 SQL。
+Swing 是 legacy fallback，不得在 V2 开发中删除。
 
-DAO 不得包含 Swing UI 代码。
+## E. 数据库规则
 
-Service 负责状态流转、校验、事务边界和业务规则。
+- PreparedStatement；
+- try-with-resources；
+- 关键操作使用 transaction；
+- 密码/数据库凭据不得硬编码和提交；
+- V2 schema 使用 migration；
+- 3D Parcel 位置通过 `slot_id` 映射，禁止把任意 world XYZ 作为 Parcel 真实位置；
+- Relocation 必须有并发冲突控制和 rollback。
 
-## 四、Swing 规则
+## F. 前端与 3D 一致性规则
 
-- Swing 组件创建在 EDT。
-- 耗时数据库查询、备份、统计任务不能阻塞 EDT。
-- 使用 SwingWorker 或 ExecutorService。
-- 表格使用 TableModel。
-- 所有输入必须校验。
-- 用户错误使用友好对话框提示，不输出堆栈给用户。
-- 日志可记录异常堆栈。
+- 2D/3D 拖拽只能作为操作预览；
+- 数据库成功后才确认最终状态；
+- 409/业务失败必须 rollback；
+- 2D、3D、详情和统计必须使用同一 Pinia/服务器真相；
+- 不得用静态 mock 作为最终业务数据；
+- 不得用截图、视频或 CSS 假装可交互 3D。
 
-## 五、数据库规则
+## G. Three.js 资源规则
 
-- 只使用 PreparedStatement。
-- 使用 try-with-resources。
-- 关键出入库流程需要事务。
-- 数据库连接配置不得硬编码密码。
-- 默认读取：
-  - 环境变量；
-  - 或未提交的本地 `application.properties`。
-- 仓库只提交 `application.example.properties`。
+- GLB 只放环境；
+- Shelf/Slot/Parcel 程序化生成；
+- Three.js 代码拆分到 `frontend/src/three/`；
+- 页面卸载 cancel RAF、dispose、remove listeners；
+- GLB 加载失败必须有 primitive fallback。
 
-## 六、Git 规则
+## H. Git 与阶段日志
 
-建议分支：`codex/development`
+V2 工作分支：`codex/visualization-v2`。
 
-阶段提交格式：
+每个 Phase 独立 commit。
+
+阶段日志：
 
 ```text
-phase-1: initialize project skeleton and database
-phase-2: implement domain models and generic dao
-phase-3: implement core parcel services
+development-log/v2/PHASE_0.md
 ...
+development-log/v2/PHASE_8.md
 ```
 
-一次 Phase 至少一个 commit。
+日志必须记录：完成内容、文件、命令、测试结果、修复、未完成项、阻塞和下一阶段输入。
 
-不得把整个项目压缩为一个最终 commit。
+## I. 完成条件
 
-## 七、每阶段结束报告
+V2 只有在以下全部满足后才可最终完成：
 
-在 `development-log/PHASE_X.md` 中记录：
+- 所有 V2 Phase 真实通过；
+- Java regression 通过；
+- 真实 MySQL integration 通过；
+- 前端 type-check/test/build 通过；
+- 浏览器全链路通过；
+- 2D/3D 与数据库一致；
+- Camera focus 正确；
+- relocate 冲突/rollback 正确；
+- Swing legacy 仍可编译；
+- README/测试报告/答辩与已知限制更新。
 
-- 完成内容
-- 新增/修改文件
-- 执行命令
-- 测试结果
-- 发现的问题
-- 修复内容
-- 剩余风险
-- 对下一阶段的影响
-
-## 八、最终完成条件
-
-只有以下全部满足才可宣告完成：
-
-- 所有 Phase 完成；
-- `mvn clean test` 成功；
-- SQL 初始化成功；
-- 核心功能可演示；
-- 无 SpringBoot/ORM 等违规依赖；
-- 课程 5 个技术点可定位；
-- README 已有运行步骤；
-- 演示账号、演示数据已准备；
-- 答辩文档已生成；
-- 最终回归测试已记录。
+若缺少真实 MySQL、浏览器或资产环境，必须保持对应 Phase IN_PROGRESS 并说明人工步骤。

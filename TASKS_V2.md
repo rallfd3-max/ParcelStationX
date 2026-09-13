@@ -254,7 +254,7 @@
 
 ## V2 Phase 7 — Blender 接入、Analytics、性能与视觉完善
 
-状态：`TODO`
+状态：`DONE`
 
 范围：
 

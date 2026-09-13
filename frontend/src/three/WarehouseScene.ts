@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { WarehouseSnapshot } from '@/types/api'
 import { CameraController } from './CameraController'
 import { DragController } from './DragController'
-import { PrimitiveEnvironmentLoader } from './EnvironmentLoader'
+import { GlbEnvironmentLoader } from './EnvironmentLoader'
 import { buildParcel } from './ParcelRenderer'
 import { buildShelf } from './ShelfBuilder'
 import { SceneIndex } from './SceneIndex'
@@ -35,7 +35,7 @@ export class WarehouseScene {
   }
   private isAvailable(slotId:number,parcelId:number) { const slot=this.data.slots.find(s=>s.id===slotId); return Boolean(slot?.enabled&&!this.data.parcels.some(p=>p.slotId===slotId&&p.id!==parcelId&&p.status!=='PICKED_UP')) }
   private async build() {
-    this.scene.add(await new PrimitiveEnvironmentLoader().load())
+    this.scene.add(await new GlbEnvironmentLoader().load())
     for (const shelf of this.data.shelves) { const layout=this.data.layouts.find(x=>x.shelfId===shelf.id); if(layout)this.scene.add(buildShelf(shelf,layout,this.index)) }
     for (const slot of this.data.slots) { const layout=this.data.layouts.find(x=>x.shelfId===slot.shelfId); if(layout)this.scene.add(buildSlot(slot,layout,this.index)) }
     for (const parcel of this.data.parcels) { const slot=this.data.slots.find(x=>x.id===parcel.slotId),layout=slot&&this.data.layouts.find(x=>x.shelfId===slot.shelfId); if(slot&&layout&&parcel.status!=='PICKED_UP')this.scene.add(buildParcel(parcel,slot,layout,this.index)) }

@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import * as echarts from 'echarts'
+import * as echarts from 'echarts/core'
+import { BarChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 const props = defineProps<{ title: string; labels: string[]; values: number[]; color?: string }>()
+echarts.use([BarChart, GridComponent, TooltipComponent, CanvasRenderer])
 const element = ref<HTMLDivElement>()
 let chart: echarts.ECharts | undefined
 function render() {

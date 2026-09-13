@@ -1,0 +1,3 @@
+import { BoxGeometry,Mesh,MeshStandardMaterial } from 'three';import type { Parcel } from '@/types/api';import type { SceneIndex } from './SceneIndex'
+export function stagingPosition(index:number){return {x:-5.6+(index%4)*.75,y:.28,z:4.7+Math.floor(index/4)*.65}}
+export function buildStagingParcel(parcel:Parcel,order:number,index:SceneIndex){const p=stagingPosition(order),mesh=new Mesh(new BoxGeometry(.58,.52,.48),new MeshStandardMaterial({color:0x35d98b,emissive:0x092a24}));mesh.position.set(p.x,p.y,p.z);mesh.userData.parcelId=parcel.id;mesh.userData.staging=true;index.parcels.set(parcel.id,mesh);return mesh}

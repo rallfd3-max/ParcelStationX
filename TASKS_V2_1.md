@@ -13,7 +13,7 @@ Status: DONE
 Add a safe incremental V2.1 migration. Expand demo/business layout to eight real shelves: A-01/A-02/B-01/B-02/C-01/C-02/D-01/D-02, about 240 slots total, without deleting existing parcels. Arrange real ShelfLayout records into zones and aisles. Add staging/pickup areas and improve reset/front/top camera framing for all layouts. Do not fake business shelves only in Three.js.
 
 ## Phase C — 3D Hover + Inbound/Outbound
-Status: TODO
+Status: DONE
 
 Add parcel hover raycast + HTML tooltip with tracking number, courier, status, shelf/slot, customer, masked mobile, arrival and dwell time. Disable normal hover while dragging. Add quick inbound on Digital Twin, reuse ParcelService.inbound, show slotId=null IN_STOCK parcels in a 3D staging zone, support dragging them to slots, and add selected-parcel outbound with pickup code and confirmation using ParcelService.outbound. Refresh 2D/3D/details/dashboard after successful mutations.
 

@@ -1,0 +1,3 @@
+import type { ParcelDetails } from '@/types/api'
+export function dwellText(arrivedAt:string,now=Date.now()){const hours=Math.max(0,Math.floor((now-new Date(arrivedAt).getTime())/3_600_000));return hours<24?`${hours} 小时`:`${Math.floor(hours/24)} 天 ${hours%24} 小时`}
+export function tooltipLines(detail:ParcelDetails,now=Date.now()){return [detail.parcel.trackingNo,detail.parcel.courierCompany,detail.parcel.status,detail.slotCode??'入库暂存区',detail.customer?`${detail.customer.name} · ${detail.customer.maskedMobile}`:'客户未知',detail.parcel.arrivedAt.replace('T',' '),dwellText(detail.parcel.arrivedAt,now)]}

@@ -12,6 +12,7 @@ import { WarehouseRenderer } from './WarehouseRenderer'
 import { buildOperationalAreas } from './OperationalAreas'
 import { buildStagingParcel } from './StagingParcelRenderer'
 import { HoverController,type ParcelHover } from './HoverController'
+import { resolveParcelFocus } from './parcelFocus'
 
 export class WarehouseScene {
   readonly index = new SceneIndex()
@@ -30,7 +31,7 @@ export class WarehouseScene {
     this.controls = new OrbitControls(this.renderer.camera, this.renderer.renderer.domElement)
     this.controls.enableDamping = true
     this.camera = new CameraController(this.renderer.camera, this.controls, () => data.layouts, () => data.slots)
-    this.drag = new DragController(this.renderer.renderer.domElement, this.renderer.camera, this.controls, this.index, (slotId,parcelId) => this.isAvailable(slotId,parcelId), relocate, select)
+    this.drag = new DragController(this.renderer.renderer.domElement, this.renderer.camera, this.controls, this.index, (slotId,parcelId) => this.isAvailable(slotId,parcelId), relocate, id=>{select(id);this.focusParcel(id)})
     this.hover = new HoverController(this.renderer.renderer.domElement,this.renderer.camera,this.index,()=>this.drag.isDragging(),hover)
     this.scene.add(new AmbientLight(0x9bc7dc, 1.5))
     const light = new DirectionalLight(0xffffff, 2); light.position.set(5,10,7); this.scene.add(light)
@@ -40,6 +41,7 @@ export class WarehouseScene {
     this.resize.observe(container); this.loop()
   }
   private isAvailable(slotId:number,parcelId:number) { const slot=this.data.slots.find(s=>s.id===slotId); return Boolean(slot?.enabled&&!this.data.parcels.some(p=>p.slotId===slotId&&p.id!==parcelId&&p.status!=='PICKED_UP')) }
+  focusParcel(parcelId:number){const focus=resolveParcelFocus(parcelId,this.data,this.index);if(!focus)return false;this.camera.focusParcelWorld(focus.target,focus.layout);return true}
   private async build() {
     this.scene.add(await new GlbEnvironmentLoader().load())
     for (const shelf of this.data.shelves) { const layout=this.data.layouts.find(x=>x.shelfId===shelf.id); if(layout)this.scene.add(buildShelf(shelf,layout,this.index)) }

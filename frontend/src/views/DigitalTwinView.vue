@@ -11,7 +11,7 @@ const store=useWarehouseStore(),canvas=ref<HTMLElement>(),search=ref(''),hover=r
 const inbound=reactive({trackingNo:'',courierCompany:'顺丰',customerMobile:'13900000001',remark:'3D 快速入库'})
 const route=useRoute();let scene:WarehouseScene|undefined;let hoverRequest=0
 async function mount(){if(!store.snapshot)await store.refresh();await nextTick();if(canvas.value&&store.snapshot){scene?.dispose();scene=new WarehouseScene(canvas.value,store.snapshot,select,relocate3d,showHover);const id=Number(route.query.parcelId);if(id){void select(id);focus(id)}}}
-function focus(id:number){const p=store.snapshot?.parcels.find(x=>x.id===id);if(p?.slotId)scene?.camera.focusParcel(p.slotId)}
+function focus(id:number){scene?.focusParcel(id)}
 function find(){const p=store.snapshot?.parcels.find(x=>x.trackingNo.toLowerCase().includes(search.value.toLowerCase()));if(p){void select(p.id);focus(p.id)}}
 async function detail(id:number){return apiRequest<ParcelDetails>(`/api/parcels/${id}/details`)}
 async function select(id:number){store.selectParcel(id);selectedDetail.value=await detail(id);outboundCode.value='';confirmOutbound.value=false}

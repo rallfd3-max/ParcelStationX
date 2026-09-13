@@ -15,7 +15,7 @@ Acceptance:
 - type-check/test/build pass.
 
 ## Phase H2 — Parcel Camera Focus Correctness
-Status: TODO
+Status: DONE
 
 Fix 3D focus so clicking a parcel on any of the eight real shelves focuses that exact parcel/shelf/slot rather than visually landing on the front row. Prefer the actual Parcel Object3D world position from SceneIndex as camera target, then derive view direction from the parcel's ShelfLayout. Verify parcelId/slotId mapping and front/back shelf orientation. Add automated scene/camera tests for left/right columns and front/rear shelf rows.
 

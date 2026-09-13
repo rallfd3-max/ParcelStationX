@@ -110,7 +110,7 @@
 
 ## V2 Phase 3 — Vue 基础、登录与 Dashboard
 
-状态：`TODO`
+状态：`DONE`
 
 本 Phase 才允许创建 `frontend/`。
 

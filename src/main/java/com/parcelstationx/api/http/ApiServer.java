@@ -111,6 +111,13 @@ public final class ApiServer implements AutoCloseable {
     if (warehouse != null && relocationService != null && relocations != null) {
       router.add(
           new Route(
+              "GET",
+              "/api/dashboard/summary",
+              true,
+              null,
+              c -> DashboardDto.from(warehouse.snapshot())));
+      router.add(
+          new Route(
               "GET", "/api/warehouse", true, null, c -> WarehouseDto.from(warehouse.snapshot())));
       router.add(
           new Route(

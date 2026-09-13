@@ -195,6 +195,15 @@ class RelocationServiceTest {
               .build();
       assertTrue(
           client.send(warehouse, HttpResponse.BodyHandlers.ofString()).body().contains("A-01-01"));
+      HttpRequest dashboard =
+          HttpRequest.newBuilder(URI.create(base + "/api/dashboard/summary"))
+              .header("Authorization", "Bearer " + token)
+              .GET()
+              .build();
+      HttpResponse<String> dashboardResponse =
+          client.send(dashboard, HttpResponse.BodyHandlers.ofString());
+      assertEquals(200, dashboardResponse.statusCode());
+      assertTrue(dashboardResponse.body().contains("\"inventory\":1"));
       HttpRequest relocate =
           HttpRequest.newBuilder(URI.create(base + "/api/parcels/" + parcel.id() + "/relocate"))
               .header("Authorization", "Bearer " + token)

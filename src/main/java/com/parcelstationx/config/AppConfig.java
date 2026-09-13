@@ -3,6 +3,7 @@ package com.parcelstationx.config;
 import com.parcelstationx.exception.ConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Properties;
 
 public final class AppConfig {
@@ -21,9 +22,13 @@ public final class AppConfig {
       throw new ConfigurationException("Unable to read local database configuration.", exception);
     }
 
-    String url = value("PARCEL_DB_URL", properties, "db.url");
-    String username = value("PARCEL_DB_USERNAME", properties, "db.username");
-    String password = value("PARCEL_DB_PASSWORD", properties, "db.password");
+    return loadDatabaseConfig(properties, System.getenv());
+  }
+
+  static DatabaseConfig loadDatabaseConfig(Properties properties, Map<String, String> environment) {
+    String url = value("PARCEL_DB_URL", properties, "db.url", environment);
+    String username = value("PARCEL_DB_USERNAME", properties, "db.username", environment);
+    String password = value("PARCEL_DB_PASSWORD", properties, "db.password", environment);
     if (isBlank(url) || isBlank(username) || password == null) {
       throw new ConfigurationException(
           "Database configuration is missing. Copy application.example.properties to application.properties or set PARCEL_DB_* variables.");
@@ -31,8 +36,12 @@ public final class AppConfig {
     return new DatabaseConfig(url, username, password);
   }
 
-  private static String value(String environmentKey, Properties properties, String propertyKey) {
-    String environmentValue = System.getenv(environmentKey);
+  private static String value(
+      String environmentKey,
+      Properties properties,
+      String propertyKey,
+      Map<String, String> environment) {
+    String environmentValue = environment.get(environmentKey);
     return isBlank(environmentValue) ? properties.getProperty(propertyKey) : environmentValue;
   }
 

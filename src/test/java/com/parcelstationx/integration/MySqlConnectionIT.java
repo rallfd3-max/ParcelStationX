@@ -17,7 +17,7 @@ class MySqlConnectionIT {
     try (var connection = DriverManager.getConnection(url, user, password);
         var statement =
             connection.prepareStatement(
-                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN (?,?,?,?,?,?,?,?)")) {
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN (?,?,?,?,?,?,?,?,?,?,?)")) {
       String[] tables = {
         "users",
         "customers",
@@ -26,12 +26,15 @@ class MySqlConnectionIT {
         "parcel_events",
         "exception_records",
         "notification_records",
-        "operation_logs"
+        "operation_logs",
+        "shelf_layout",
+        "shelf_slots",
+        "parcel_relocations"
       };
       for (int i = 0; i < tables.length; i++) statement.setString(i + 1, tables[i]);
       try (var rows = statement.executeQuery()) {
         rows.next();
-        assertTrue(rows.getInt(1) == 8, "schema.sql has not created all tables");
+        assertTrue(rows.getInt(1) == 11, "V2 schema/migration has not created all tables");
       }
     }
     try (var connection = DriverManager.getConnection(url, user, password);

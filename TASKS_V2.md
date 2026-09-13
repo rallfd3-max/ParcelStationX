@@ -281,7 +281,7 @@
 
 ## V2 Phase 8 — 真实 MySQL + 浏览器全链路最终验收
 
-状态：`TODO`
+状态：`IN_PROGRESS`
 
 范围：
 

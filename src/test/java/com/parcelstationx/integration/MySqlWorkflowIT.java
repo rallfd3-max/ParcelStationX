@@ -21,6 +21,7 @@ class MySqlWorkflowIT {
   private ParcelEventDaoImpl events;
   private OperationLogDaoImpl logs;
   private ParcelService service;
+  private RelocationService relocationService;
   private Long testCustomerId;
   private Long testParcelId;
   private String testTracking;
@@ -40,6 +41,15 @@ class MySqlWorkflowIT {
     service =
         new ParcelService(
             new TransactionRunner(factory), customers, shelves, parcels, events, logs);
+    relocationService =
+        new RelocationService(
+            new TransactionRunner(factory),
+            parcels,
+            new ShelfSlotDaoImpl(factory),
+            shelves,
+            new ParcelRelocationDaoImpl(factory),
+            events,
+            logs);
   }
 
   @AfterEach
@@ -63,6 +73,13 @@ class MySqlWorkflowIT {
       }
       try (var statement =
           connection.prepareStatement("DELETE FROM parcel_events WHERE parcel_id=?")) {
+        if (testParcelId != null) {
+          statement.setLong(1, testParcelId);
+          statement.executeUpdate();
+        }
+      }
+      try (var statement =
+          connection.prepareStatement("DELETE FROM parcel_relocations WHERE parcel_id=?")) {
         if (testParcelId != null) {
           statement.setLong(1, testParcelId);
           statement.executeUpdate();
@@ -120,6 +137,18 @@ class MySqlWorkflowIT {
             service.inbound(
                 new InboundRequest(
                     testTracking, "SF", customer.mobile(), shelf.id(), user.id(), "duplicate")));
+    assertNull(parcel.slotId());
+    ShelfSlot slot =
+        new ShelfSlotDaoImpl(factory)
+            .findByShelfId(shelf.id()).stream()
+                .filter(s -> parcels.findAll().stream().noneMatch(p -> s.id().equals(p.slotId())))
+                .findFirst()
+                .orElseThrow();
+    Parcel placed =
+        relocationService
+            .relocate(parcel.id(), slot.id(), parcel.version(), "mysql-it", user.id())
+            .parcel();
+    assertEquals(slot.id(), placed.slotId());
     assertEquals(before + 1, shelves.findById(shelf.id()).orElseThrow().occupied());
     assertTrue(
         events.findByParcelId(parcel.id()).stream().anyMatch(e -> e.eventType().equals("STORED")));

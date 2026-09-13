@@ -10,6 +10,8 @@ export interface User {
   username: string
   displayName: string
   role: 'ADMIN' | 'STAFF'
+  enabled?: boolean
+  createdAt?: string
 }
 
 export interface LoginResponse { token: string; user: User }
@@ -30,5 +32,8 @@ export interface ShelfLayout { shelfId: number; positionX: number; positionY: nu
 export interface ShelfSlot { id: number; shelfId: number; slotCode: string; levelIndex: number; columnIndex: number; enabled: boolean }
 export interface Parcel { id: number; trackingNo: string; courierCompany: string; customerId: number; shelfId: number | null; slotId: number | null; status: string; arrivedAt: string; pickedUpAt: string | null; operatorId: number; remark: string; version: number }
 export interface Relocation { id: number; parcelId: number; fromSlotId: number | null; newSlotId: number; operatorId: number; reason: string; createdAt: string }
+export interface ParcelEvent { id: number; parcelId: number; eventType: string; fromStatus: string | null; toStatus: string | null; operatorId: number; description: string; createdAt: string }
+export interface ParcelDetails { parcel: Parcel; customer: {id:number;name:string;maskedMobile:string}|null; operator:string|null; shelfCode:string|null; slotCode:string|null; events:ParcelEvent[]; relocations:Relocation[]; pickupCode:string }
+export interface ExceptionRecord { id:number; parcelId:number; exceptionType:string; description:string; status:string; createdBy:number; handledBy:number|null; createdAt:string; handledAt:string|null; resolution:string|null }
 export interface WarehouseSnapshot { shelves: Shelf[]; layouts: ShelfLayout[]; slots: ShelfSlot[]; parcels: Parcel[] }
 export interface RelocateResponse { parcel: Parcel; relocation: Relocation }

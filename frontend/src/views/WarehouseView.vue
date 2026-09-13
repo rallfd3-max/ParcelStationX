@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useWarehouseStore } from '@/stores/warehouse'
 import type { ShelfSlot } from '@/types/api'
 const store = useWarehouseStore()
+const route = useRoute()
 const moveTarget = ref<number | null>(null)
-onMounted(() => store.refresh())
+onMounted(async () => { await store.refresh(); const requested=Number(route.query.parcelId); if(requested) store.selectParcel(requested) })
 const shelves = computed(() => store.snapshot?.shelves ?? [])
 const visibleWaiting = computed(() => store.waitingParcels.filter(p => !store.query || p.trackingNo.toLowerCase().includes(store.query.toLowerCase())))
 function parcelAt(slotId: number) { return store.filteredParcels.find(p => p.slotId === slotId && p.status !== 'PICKED_UP') }

@@ -7,6 +7,9 @@ import com.parcelstationx.api.error.HttpErrorException;
 import com.parcelstationx.api.json.JsonCodec;
 import com.parcelstationx.dao.ParcelDao;
 import com.parcelstationx.dao.ParcelRelocationDao;
+import com.parcelstationx.model.ExceptionType;
+import com.parcelstationx.model.ParcelStatus;
+import com.parcelstationx.model.ShelfLayout;
 import com.parcelstationx.model.UserRole;
 import com.parcelstationx.service.*;
 import com.sun.net.httpserver.HttpServer;
@@ -26,7 +29,7 @@ public final class ApiServer implements AutoCloseable {
       ParcelDao parcels,
       SessionManager sessions)
       throws IOException {
-    this(address, authentication, parcels, sessions, null, null, null);
+    this(address, authentication, parcels, sessions, null, null, null, null, null, null);
   }
 
   public ApiServer(
@@ -41,7 +44,50 @@ public final class ApiServer implements AutoCloseable {
     JsonCodec json = new JsonCodec();
     Router router = new Router(json, sessions);
     registerRoutes(
-        router, json, authentication, parcels, sessions, warehouse, relocationService, relocations);
+        router,
+        json,
+        authentication,
+        parcels,
+        sessions,
+        warehouse,
+        relocationService,
+        relocations,
+        null,
+        null,
+        null);
+    server = HttpServer.create(address, 0);
+    executor =
+        Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
+    server.setExecutor(executor);
+    server.createContext("/", router);
+  }
+
+  public ApiServer(
+      InetSocketAddress address,
+      AuthenticationService authentication,
+      ParcelDao parcels,
+      SessionManager sessions,
+      WarehouseLayoutService warehouse,
+      RelocationService relocationService,
+      ParcelRelocationDao relocations,
+      ParcelQueryService parcelQueries,
+      ExceptionService exceptionService,
+      UserService userService)
+      throws IOException {
+    JsonCodec json = new JsonCodec();
+    Router router = new Router(json, sessions);
+    registerRoutes(
+        router,
+        json,
+        authentication,
+        parcels,
+        sessions,
+        warehouse,
+        relocationService,
+        relocations,
+        parcelQueries,
+        exceptionService,
+        userService);
     server = HttpServer.create(address, 0);
     executor =
         Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
@@ -57,7 +103,10 @@ public final class ApiServer implements AutoCloseable {
       SessionManager sessions,
       WarehouseLayoutService warehouse,
       RelocationService relocationService,
-      ParcelRelocationDao relocations) {
+      ParcelRelocationDao relocations,
+      ParcelQueryService parcelQueries,
+      ExceptionService exceptionService,
+      UserService userService) {
     router.add(new Route("GET", "/api/health", false, null, context -> Map.of("status", "UP")));
     router.add(
         new Route(
@@ -146,6 +195,155 @@ public final class ApiServer implements AutoCloseable {
               true,
               null,
               context -> relocations.findByParcelId(parseId(context.pathParameter("id")))));
+    }
+    if (parcelQueries != null) {
+      router.add(
+          new Route(
+              "GET",
+              "/api/parcel-details",
+              true,
+              null,
+              c -> parcelQueries.findAllDetails().stream().map(ParcelDetailsDto::from).toList()));
+      router.add(
+          new Route(
+              "GET",
+              "/api/parcels/{id}/details",
+              true,
+              null,
+              c -> ParcelDetailsDto.from(parcelQueries.details(parseId(c.pathParameter("id"))))));
+      router.add(
+          new Route(
+              "GET",
+              "/api/parcels/{id}/events",
+              true,
+              null,
+              c -> parcelQueries.details(parseId(c.pathParameter("id"))).events()));
+    }
+    if (exceptionService != null) {
+      router.add(new Route("GET", "/api/exceptions", true, null, c -> exceptionService.findAll()));
+      router.add(
+          new Route(
+              "POST",
+              "/api/parcels/{id}/exception",
+              true,
+              null,
+              c -> {
+                CreateExceptionRequest request = json.read(c.body(), CreateExceptionRequest.class);
+                return exceptionService.create(
+                    parseId(c.pathParameter("id")),
+                    enumValue(ExceptionType.class, request.exceptionType(), "异常类型无效。"),
+                    requireText(request.description(), "异常描述必填。"),
+                    c.user().id());
+              }));
+      router.add(
+          new Route(
+              "POST",
+              "/api/exceptions/{id}/resolve",
+              true,
+              null,
+              c -> {
+                ResolveExceptionRequest request =
+                    json.read(c.body(), ResolveExceptionRequest.class);
+                return exceptionService.resolve(
+                    parseId(c.pathParameter("id")),
+                    enumValue(ParcelStatus.class, request.targetStatus(), "目标状态无效。"),
+                    requireText(request.resolution(), "处理结果必填。"),
+                    c.user().id());
+              }));
+    }
+    if (userService != null && warehouse != null) {
+      router.add(
+          new Route(
+              "GET",
+              "/api/admin/users",
+              true,
+              UserRole.ADMIN,
+              c -> userService.findAll().stream().map(UserDto::from).toList()));
+      router.add(
+          new Route(
+              "POST",
+              "/api/admin/users",
+              true,
+              UserRole.ADMIN,
+              c -> {
+                CreateUserRequest request = json.read(c.body(), CreateUserRequest.class);
+                return UserDto.from(
+                    userService.create(
+                        request.username(),
+                        request.password(),
+                        request.displayName(),
+                        enumValue(UserRole.class, request.role(), "角色无效。")));
+              }));
+      router.add(
+          new Route(
+              "PUT",
+              "/api/admin/users/{id}/enabled",
+              true,
+              UserRole.ADMIN,
+              c -> {
+                SetEnabledRequest request = json.read(c.body(), SetEnabledRequest.class);
+                if (request.enabled() == null)
+                  throw new BadRequestException("enabled 必填。", "MISSING_FIELD");
+                return UserDto.from(
+                    userService.setEnabled(parseId(c.pathParameter("id")), request.enabled()));
+              }));
+      router.add(
+          new Route(
+              "GET",
+              "/api/admin/warehouse",
+              true,
+              UserRole.ADMIN,
+              c -> WarehouseDto.from(warehouse.snapshot())));
+      router.add(
+          new Route(
+              "PUT",
+              "/api/admin/layouts/{id}",
+              true,
+              UserRole.ADMIN,
+              c -> {
+                long id = parseId(c.pathParameter("id"));
+                ShelfLayout request = json.read(c.body(), ShelfLayout.class);
+                if (request.shelfId() != null && request.shelfId() != id)
+                  throw new BadRequestException("路径与布局 shelfId 不一致。", "ID_MISMATCH");
+                return warehouse.updateLayout(
+                    new ShelfLayout(
+                        id,
+                        request.positionX(),
+                        request.positionY(),
+                        request.positionZ(),
+                        request.rotationY(),
+                        request.width(),
+                        request.height(),
+                        request.depth(),
+                        request.columns(),
+                        request.levels(),
+                        null));
+              }));
+      router.add(
+          new Route(
+              "PUT",
+              "/api/admin/slots/{id}/enabled",
+              true,
+              UserRole.ADMIN,
+              c -> {
+                SetSlotEnabledRequest request = json.read(c.body(), SetSlotEnabledRequest.class);
+                if (request.enabled() == null)
+                  throw new BadRequestException("enabled 必填。", "MISSING_FIELD");
+                return warehouse.setSlotEnabled(parseId(c.pathParameter("id")), request.enabled());
+              }));
+    }
+  }
+
+  private static String requireText(String value, String message) {
+    if (value == null || value.isBlank()) throw new BadRequestException(message, "MISSING_FIELD");
+    return value.trim();
+  }
+
+  private static <E extends Enum<E>> E enumValue(Class<E> type, String value, String message) {
+    try {
+      return Enum.valueOf(type, value == null ? "" : value);
+    } catch (IllegalArgumentException exception) {
+      throw new BadRequestException(message, "INVALID_ENUM");
     }
   }
 

@@ -139,4 +139,8 @@ public final class ExceptionService {
   public List<ExceptionRecord> findOpen() {
     return exceptions.findOpen();
   }
+
+  public List<ExceptionRecord> findAll() {
+    return exceptions.findAll();
+  }
 }

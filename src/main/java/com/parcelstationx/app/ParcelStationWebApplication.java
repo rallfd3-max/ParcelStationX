@@ -16,6 +16,7 @@ import com.parcelstationx.dao.impl.ShelfSlotDaoImpl;
 import com.parcelstationx.dao.impl.UserDaoImpl;
 import com.parcelstationx.exception.AppException;
 import com.parcelstationx.service.AuthenticationService;
+import com.parcelstationx.service.DashboardAnalyticsService;
 import com.parcelstationx.service.ExceptionService;
 import com.parcelstationx.service.ParcelQueryService;
 import com.parcelstationx.service.ParcelService;
@@ -64,7 +65,8 @@ public final class ParcelStationWebApplication {
               new ExceptionService(
                   transaction, new ExceptionRecordDaoImpl(connections), parcels, events, logs),
               new UserService(users, new PasswordHasher()),
-              parcelService);
+              parcelService,
+              new DashboardAnalyticsService(warehouse, new ExceptionRecordDaoImpl(connections), logs));
       Runtime.getRuntime().addShutdownHook(new Thread(server::close, "parcel-api-shutdown"));
       server.start();
       System.out.println("ParcelStationX Web API listening on http://127.0.0.1:" + server.port());

@@ -1,33 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import {computed,onMounted} from 'vue'
 import DataChart from '@/components/DataChart.vue'
 import MetricCard from '@/components/MetricCard.vue'
-import { useDashboardStore } from '@/stores/dashboard'
-
-const dashboard = useDashboardStore()
-onMounted(() => dashboard.refresh())
-const courierLabels = computed(() => Object.keys(dashboard.summary?.courierVolumes ?? {}))
-const courierValues = computed(() => Object.values(dashboard.summary?.courierVolumes ?? {}))
-const shelfLabels = computed(() => Object.keys(dashboard.summary?.shelfOccupancy ?? {}))
-const shelfValues = computed(() => Object.values(dashboard.summary?.shelfOccupancy ?? {}))
+import {useDashboardStore} from '@/stores/dashboard'
+const data=useDashboardStore();onMounted(()=>data.refresh())
+const dates=computed(()=>data.trends?.points.map(x=>x.date.slice(5))??[])
+const inbound=computed(()=>data.trends?.points.map(x=>x.inbound)??[]),outbound=computed(()=>data.trends?.points.map(x=>x.outbound)??[]),inventory=computed(()=>data.trends?.points.map(x=>x.inventory)??[])
+function keys(value?:Record<string,number>){return Object.keys(value??{})}function values(value?:Record<string,number>){return Object.values(value??{})}
+function fmt(value:unknown){return Array.isArray(value)?`${value[0]}-${String(value[1]).padStart(2,'0')}-${String(value[2]).padStart(2,'0')} ${String(value[3]??0).padStart(2,'0')}:${String(value[4]??0).padStart(2,'0')}`:String(value??'').replace('T',' ')}
 </script>
-
-<template>
-  <section class="dashboard page">
-    <header class="page-heading"><div><p class="eyebrow">OPERATIONS OVERVIEW</p><h1>驿站运行驾驶舱</h1><p>从 Java API 实时读取库存与仓位状态</p></div><button class="ghost" :disabled="dashboard.loading" @click="dashboard.refresh">刷新数据</button></header>
-    <div v-if="dashboard.loading && !dashboard.summary" class="state-panel">正在同步现场数据…</div>
-    <div v-else-if="dashboard.error && !dashboard.summary" class="state-panel error" role="alert">{{ dashboard.error }} <button @click="dashboard.refresh">重试</button></div>
-    <template v-else-if="dashboard.summary">
-      <div class="metrics">
-        <MetricCard label="今日入库" :value="dashboard.summary.todayInbound" note="件 / TODAY" />
-        <MetricCard label="今日出库" :value="dashboard.summary.todayOutbound" note="件 / TODAY" accent="#77e6a1" />
-        <MetricCard label="当前库存" :value="dashboard.summary.inventory" note="件 / ON SITE" accent="#7aa7ff" />
-        <MetricCard label="异常件" :value="dashboard.summary.exceptions" note="需要关注" accent="#ff6577" />
-        <MetricCard label="滞留件" :value="dashboard.summary.overdue" note="超过 7 天" accent="#ffbe55" />
-        <MetricCard label="仓位利用率" :value="`${dashboard.summary.slotUtilization}%`" note="ENABLED SLOTS" accent="#b58aff" />
-      </div>
-      <div class="dashboard-grid"><DataChart title="快递公司件量" :labels="courierLabels" :values="courierValues" /><DataChart title="货架占用率" :labels="shelfLabels" :values="shelfValues" color="#ff9b5e" /></div>
-      <div v-if="courierLabels.length === 0" class="state-panel">暂无快件数据。完成入库后，这里会自动显示分布。</div>
-    </template>
-  </section>
-</template>
+<template><section class="dashboard page operations-home"><header class="page-heading"><div><p class="eyebrow">OPERATIONS HOME</p><h1>驿站运营首页</h1><p>从 Java API 与 MySQL 实时汇总现场、趋势、分布和活动</p></div><button class="ghost" :disabled="data.loading" @click="data.refresh">刷新数据</button></header><div v-if="data.loading&&!data.summary" class="state-panel">正在同步运营数据…</div><div v-else-if="data.error&&!data.summary" class="state-panel error" role="alert">{{data.error}} <button @click="data.refresh">重试</button></div><template v-else-if="data.summary"><div class="metrics"><MetricCard label="今日入库" :value="data.summary.todayInbound" note="件 / TODAY"/><MetricCard label="今日出库" :value="data.summary.todayOutbound" note="件 / TODAY" accent="#77e6a1"/><MetricCard label="当前库存" :value="data.summary.inventory" note="件 / ON SITE" accent="#7aa7ff"/><MetricCard label="异常件" :value="data.summary.exceptions" note="需要关注" accent="#ff6577"/><MetricCard label="滞留件" :value="data.summary.overdue" note="超过 7 天" accent="#ffbe55"/><MetricCard label="仓位利用率" :value="`${data.summary.slotUtilization}%`" note="ENABLED SLOTS" accent="#b58aff"/></div><div id="analytics" class="home-section"><header><p class="eyebrow">TRENDS · 14 DAYS</p><h2>流量与库存趋势</h2></header><div class="dashboard-grid triple"><DataChart title="入库趋势" :labels="dates" :values="inbound"/><DataChart title="出库趋势" :labels="dates" :values="outbound" color="#77e6a1"/><DataChart title="库存趋势" :labels="dates" :values="inventory" color="#7aa7ff"/></div></div><div v-if="data.distributions" class="home-section"><header><p class="eyebrow">DISTRIBUTIONS</p><h2>业务分布</h2></header><div class="dashboard-grid triple"><DataChart title="快递公司" :labels="keys(data.distributions.courier)" :values="values(data.distributions.courier)"/><DataChart title="快件状态" :labels="keys(data.distributions.status)" :values="values(data.distributions.status)" color="#77e6a1"/><DataChart title="异常类型" :labels="keys(data.distributions.exceptionType)" :values="values(data.distributions.exceptionType)" color="#ff6577"/><DataChart title="货架利用率 %" :labels="keys(data.distributions.shelfUtilization)" :values="values(data.distributions.shelfUtilization)" color="#ff9b5e"/><DataChart title="分区利用率 %" :labels="keys(data.distributions.zoneUtilization)" :values="values(data.distributions.zoneUtilization)" color="#b58aff"/><DataChart title="停留时长" :labels="keys(data.distributions.dwell)" :values="values(data.distributions.dwell)" color="#ffbe55"/></div></div><div v-if="data.activity" class="home-section activity-grid"><article class="chart-card"><header><span>最近异常</span><small>LIVE DATA</small></header><ol class="activity-list"><li v-for="item in data.activity.recentExceptions" :key="item.id"><b>{{item.exceptionType}} · #{{item.parcelId}}</b><span>{{item.description}}</span><small>{{fmt(item.createdAt)}} · {{item.status}}</small></li></ol></article><article class="chart-card"><header><span>最近操作</span><small>LIVE DATA</small></header><ol class="activity-list"><li v-for="item in data.activity.recentOperations" :key="item.id"><b>{{item.operationType}} · {{item.targetType}} #{{item.targetId}}</b><span>{{item.description}}</span><small>{{fmt(item.createdAt)}}</small></li></ol></article></div></template></section></template>

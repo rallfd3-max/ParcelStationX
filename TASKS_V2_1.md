@@ -18,7 +18,7 @@ Status: DONE
 Add parcel hover raycast + HTML tooltip with tracking number, courier, status, shelf/slot, customer, masked mobile, arrival and dwell time. Disable normal hover while dragging. Add quick inbound on Digital Twin, reuse ParcelService.inbound, show slotId=null IN_STOCK parcels in a 3D staging zone, support dragging them to slots, and add selected-parcel outbound with pickup code and confirmation using ParcelService.outbound. Refresh 2D/3D/details/dashboard after successful mutations.
 
 ## Phase D — Home Analytics Merge
-Status: TODO
+Status: DONE
 
 Rename “驾驶舱” to “首页”, remove the separate analytics navigation item, redirect /analytics to /dashboard#analytics, and rebuild Dashboard as a vertically scrollable operations home. Add real ECharts sections for inbound/outbound trends, inventory trend, courier/status/exception distributions, shelf/zone utilization, dwell distribution, recent exceptions and recent operations. Add real Java dashboard trend/distribution/activity APIs and keep SQL in DAO/service layers.
 

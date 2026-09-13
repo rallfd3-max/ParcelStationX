@@ -7,12 +7,11 @@ const session = useSessionStore()
 const router = useRouter()
 session.initializeClient()
 const navigation = computed(() => [
-  { to: '/dashboard', label: '驾驶舱' },
+  { to: '/dashboard', label: '首页' },
   { to: '/warehouse', label: '仓库作业' },
   { to: '/digital-twin', label: '数字孪生' },
   { to: '/parcels', label: '快件' },
   { to: '/exceptions', label: '异常件' },
-  { to: '/analytics', label: '分析' },
   ...(session.isAdmin ? [{ to: '/settings', label: '系统设置' }] : []),
 ])
 async function logout() { await session.logout(); await router.push('/login') }

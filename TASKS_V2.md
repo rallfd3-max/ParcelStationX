@@ -29,7 +29,7 @@
 
 ## V2 Phase 1 — Java HTTP / JSON / Session 基础
 
-状态：`TODO`
+状态：`DONE`
 
 只实现后端 Web 基础，不实现 ShelfSlot migration 与 Vue。
 

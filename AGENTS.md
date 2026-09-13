@@ -18,17 +18,24 @@ V2 开始工作前必须读取：
 8. `docs/v2/07_TEST_ACCEPTANCE.md`
 9. `TASKS_V2.md`
 10. `CODEX_V2_MASTER_PROMPT.md`
+11. `CODEX_V2_AUTORUN_PROMPT.md`
 
 在 `codex/visualization-v2` 上，旧的 `TASKS.md` 仅作为 legacy V1 历史，不得把它当作当前开发任务。
 
-### V2 最重要规则
+### V2 最重要规则：连续自动开发
 
-- **一次 Codex 运行只完成一个 V2 Phase。**
-- 找到 `TASKS_V2.md` 中编号最小的 TODO/IN_PROGRESS Phase，只实现它。
-- 当前 Phase 完成：实现 → 编译/类型检查 → 测试 → 修复 → 再测试 → 阶段日志 → 更新状态 → 独立 commit → push → 停止。
-- 禁止在同一次运行继续下一 Phase。
-- 真实环境不足时可保持 IN_PROGRESS，但禁止虚假 DONE。
-- 禁止直接修改/合并 main。
+- **用户已经明确授权：不需要在 Phase 之间等待人工确认，也不需要用户反复输入“继续”。**
+- 从 `TASKS_V2.md` 中编号最小的 `TODO` 或 `IN_PROGRESS` Phase 开始，严格按 Phase 0 → Phase 8 顺序推进。
+- 每个 Phase 仍然必须形成独立质量闭环：实现 → 编译/类型检查 → 测试 → 修复 → 再测试 → 阶段日志 → 更新状态 → 独立 commit → push。
+- 当前 Phase 满足验收并成功 push 后，**自动重新读取仓库状态并立即进入下一个 Phase**。
+- 禁止为了“连续执行”而跨阶段混写；Phase N 未达到其代码与自动测试验收前，不得把 Phase N+1 的主体功能提前塞入同一个 commit。
+- 普通 BUG、编译错误、测试失败、类型错误、前端构建错误属于 Codex 自行解决的问题，**不是停下来请求用户确认的理由**。
+- 只有遇到真实硬阻塞才允许停止，例如：缺少必须由用户提供的凭据、操作系统管理员权限、真实 MySQL 无法启动且后续验收确实依赖它、无法获得必须的外部资产/设备、仓库权限阻止 push。
+- 若某 Phase 有外部验收项暂时不可执行，但不阻塞后续纯代码开发：完成该 Phase 所有可完成内容，记录 `IN_PROGRESS` 与阻塞原因，独立 commit/push 后可继续后续不依赖该阻塞的 Phase；不得伪造验证成功。
+- 到 Phase 8 时，如果真实 MySQL / 浏览器人工链路仍因权限、凭据等外部条件无法完成，停止并一次性列出人工需要完成的剩余验收步骤。
+- 禁止直接修改/合并 `main`。
+
+> 如 `TASKS_V2.md` 或 `CODEX_V2_MASTER_PROMPT.md` 中仍存在旧的“完成一个 Phase 后停止/等待下一次运行”措辞，以本节和 `CODEX_V2_AUTORUN_PROMPT.md` 为准；旧停止规则作废，但各 Phase 的范围、测试和验收标准继续有效。
 
 ## B. 后端课程约束
 
@@ -122,7 +129,7 @@ Swing 是 legacy fallback，不得在 V2 开发中删除。
 
 V2 工作分支：`codex/visualization-v2`。
 
-每个 Phase 独立 commit。
+每个 Phase 独立 commit，不得把多个 Phase 压成一个总 commit。
 
 阶段日志：
 
@@ -133,6 +140,15 @@ development-log/v2/PHASE_8.md
 ```
 
 日志必须记录：完成内容、文件、命令、测试结果、修复、未完成项、阻塞和下一阶段输入。
+
+每次 Phase push 完成后继续下一 Phase 前，重新读取：
+
+- `git status`
+- `TASKS_V2.md`
+- 当前阶段日志
+- 下一阶段定义
+
+确保工作区干净且阶段边界清晰。
 
 ## I. 完成条件
 
@@ -149,4 +165,4 @@ V2 只有在以下全部满足后才可最终完成：
 - Swing legacy 仍可编译；
 - README/测试报告/答辩与已知限制更新。
 
-若缺少真实 MySQL、浏览器或资产环境，必须保持对应 Phase IN_PROGRESS 并说明人工步骤。
+若缺少真实 MySQL、浏览器或资产环境，必须保持对应 Phase `IN_PROGRESS` 并说明人工步骤；除此之外，不得因为“需要用户确认”而停止连续开发。

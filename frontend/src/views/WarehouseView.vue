@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { apiRequest } from '@/api/client'
 import { useWarehouseStore } from '@/stores/warehouse'
 import type { ShelfSlot } from '@/types/api'
 const store = useWarehouseStore()
 const route = useRoute()
 const moveTarget = ref<number | null>(null)
+const inbound = reactive({ trackingNo: '', courierCompany: '顺丰', customerMobile: '13900000001', remark: 'Web 验收入库' })
 onMounted(async () => { await store.refresh(); const requested=Number(route.query.parcelId); if(requested) store.selectParcel(requested) })
 const shelves = computed(() => store.snapshot?.shelves ?? [])
 const visibleWaiting = computed(() => store.waitingParcels.filter(p => !store.query || p.trackingNo.toLowerCase().includes(store.query.toLowerCase())))
@@ -14,10 +16,12 @@ function slotsFor(shelfId: number) { return store.snapshot?.slots.filter(s => s.
 function dragStart(id: number, event: DragEvent) { store.draggingParcelId = id; store.selectParcel(id); event.dataTransfer?.setData('text/plain', String(id)); if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move' }
 async function drop(slot: ShelfSlot, event: DragEvent) { const id = Number(event.dataTransfer?.getData('text/plain') || store.draggingParcelId); if (id && store.isSlotAvailable(slot, id)) await store.relocate(id, slot.id) }
 async function moveSelected() { if (store.selectedParcelId && moveTarget.value) await store.relocate(store.selectedParcelId, moveTarget.value, 'accessible move dialog') }
+async function createInbound() { store.error=''; try { await apiRequest('/api/parcels/inbound',{method:'POST',body:JSON.stringify(inbound)}); store.notice='快件已入库并进入待上架区'; inbound.trackingNo=''; await store.refresh() } catch(e) { store.error=e instanceof Error?e.message:'入库失败' } }
 </script>
 <template>
   <section class="page warehouse-page">
     <header class="page-heading"><div><p class="eyebrow">WAREHOUSE CONTROL</p><h1>二维仓位作业中心</h1><p>拖拽仅为预览，服务器事务成功后才确认位置</p></div><button class="ghost" @click="store.refresh">刷新现场</button></header>
+    <form class="warehouse-toolbar" @submit.prevent="createInbound"><input v-model="inbound.trackingNo" required placeholder="新运单号" aria-label="新运单号"><input v-model="inbound.customerMobile" required placeholder="客户手机号" aria-label="客户手机号"><select v-model="inbound.courierCompany"><option>顺丰</option><option>中通</option><option>圆通</option><option>韵达</option></select><button class="primary compact">快速入库</button></form>
     <div class="warehouse-toolbar"><input v-model="store.query" placeholder="搜索运单号或快递公司" aria-label="搜索快件" /><span v-if="store.notice" class="success" aria-live="polite">{{ store.notice }}</span><span v-if="store.error" class="error" role="alert">{{ store.error }}</span></div>
     <div v-if="store.loading && !store.snapshot" class="state-panel">正在加载仓库快照…</div>
     <div v-else-if="store.snapshot" class="warehouse-layout">

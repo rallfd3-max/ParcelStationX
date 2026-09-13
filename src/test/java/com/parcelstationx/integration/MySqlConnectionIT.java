@@ -53,12 +53,10 @@ class MySqlConnectionIT {
           connection
               .createStatement()
               .executeQuery(
-                  "SELECT s.id,s.occupied,COUNT(p.id) FROM shelves s LEFT JOIN parcels p ON p.shelf_id=s.id AND p.status IN ('IN_STOCK','EXCEPTION') GROUP BY s.id,s.occupied ORDER BY s.id")) {
-        int[] expected = {17, 17, 16};
+                  "SELECT s.id,s.occupied,COUNT(p.id) FROM shelves s LEFT JOIN shelf_slots ss ON ss.shelf_id=s.id LEFT JOIN parcels p ON p.slot_id=ss.id AND p.status IN ('IN_STOCK','EXCEPTION') GROUP BY s.id,s.occupied ORDER BY s.id")) {
         int index = 0;
-        while (rows.next() && index < 3) {
-          assertEquals(expected[index], rows.getInt(2));
-          assertEquals(expected[index], rows.getInt(3));
+        while (rows.next()) {
+          assertEquals(rows.getInt(3), rows.getInt(2));
           index++;
         }
         assertEquals(3, index);

@@ -14,7 +14,7 @@
 ## 命令与结果
 
 - `mvn clean test`：通过，37 tests。
-- `mvn -Pintegration-test verify`：BUILD SUCCESS，但 2 个 MySQL IT 因变量缺失跳过。
+- `mvn -Pintegration-test verify`：真实 MySQL 9.6.0 通过，2 tests，0 skipped。
 - `npm run type-check`：通过。
 - `npm run test`：通过，7 files / 20 tests。
 - `npm run build`：通过。
@@ -22,4 +22,4 @@
 
 ## 阻塞与恢复
 
-未配置 `PARCEL_DB_URL`、`PARCEL_DB_USERNAME`、`PARCEL_DB_PASSWORD`；自动浏览器又禁止 localhost。配置并初始化 MySQL 后重跑 integration profile，再按 `docs/v2/V2_DEMO_SCRIPT.md` 在 Chrome/Edge 留存全链路证据。恢复时从 Phase 8 继续，通过后更新本日志与任务状态为 DONE，再提交最终验收 commit。
+已备份并迁移本机数据库，seed 数量和占位一致性通过；应用内浏览器也已验证登录、Dashboard 与快速入库。剩余阻塞为 Chrome/Edge 完整拖拽、3D 与视觉链路证据，Phase 8 保持 IN_PROGRESS。

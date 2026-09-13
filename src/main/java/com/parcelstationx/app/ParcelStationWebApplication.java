@@ -18,6 +18,7 @@ import com.parcelstationx.exception.AppException;
 import com.parcelstationx.service.AuthenticationService;
 import com.parcelstationx.service.ExceptionService;
 import com.parcelstationx.service.ParcelQueryService;
+import com.parcelstationx.service.ParcelService;
 import com.parcelstationx.service.PasswordHasher;
 import com.parcelstationx.service.RelocationService;
 import com.parcelstationx.service.TransactionRunner;
@@ -45,6 +46,8 @@ public final class ParcelStationWebApplication {
       var logs = new OperationLogDaoImpl(connections);
       var transaction = new TransactionRunner(connections);
       var warehouse = new WarehouseLayoutService(shelves, layouts, slots, parcels);
+      var customers = new CustomerDaoImpl(connections);
+      var parcelService = new ParcelService(transaction, customers, shelves, parcels, events, logs);
       var relocationService =
           new RelocationService(transaction, parcels, slots, shelves, relocations, events, logs);
       var server =
@@ -57,16 +60,11 @@ public final class ParcelStationWebApplication {
               relocationService,
               relocations,
               new ParcelQueryService(
-                  parcels,
-                  new CustomerDaoImpl(connections),
-                  users,
-                  shelves,
-                  slots,
-                  events,
-                  relocations),
+                  parcels, customers, users, shelves, slots, events, relocations),
               new ExceptionService(
                   transaction, new ExceptionRecordDaoImpl(connections), parcels, events, logs),
-              new UserService(users, new PasswordHasher()));
+              new UserService(users, new PasswordHasher()),
+              parcelService);
       Runtime.getRuntime().addShutdownHook(new Thread(server::close, "parcel-api-shutdown"));
       server.start();
       System.out.println("ParcelStationX Web API listening on http://127.0.0.1:" + server.port());

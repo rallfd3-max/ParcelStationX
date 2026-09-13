@@ -22,6 +22,7 @@ logs/
 backup-data/
 *.ser
 *.bak
+backup/*.sql
 
 # OS
 .DS_Store

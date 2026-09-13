@@ -29,7 +29,7 @@ public final class ApiServer implements AutoCloseable {
       ParcelDao parcels,
       SessionManager sessions)
       throws IOException {
-    this(address, authentication, parcels, sessions, null, null, null, null, null, null);
+    this(address, authentication, parcels, sessions, null, null, null, null, null, null, null);
   }
 
   public ApiServer(
@@ -54,6 +54,7 @@ public final class ApiServer implements AutoCloseable {
         relocations,
         null,
         null,
+        null,
         null);
     server = HttpServer.create(address, 0);
     executor =
@@ -72,7 +73,8 @@ public final class ApiServer implements AutoCloseable {
       ParcelRelocationDao relocations,
       ParcelQueryService parcelQueries,
       ExceptionService exceptionService,
-      UserService userService)
+      UserService userService,
+      ParcelService parcelService)
       throws IOException {
     JsonCodec json = new JsonCodec();
     Router router = new Router(json, sessions);
@@ -87,7 +89,8 @@ public final class ApiServer implements AutoCloseable {
         relocations,
         parcelQueries,
         exceptionService,
-        userService);
+        userService,
+        parcelService);
     server = HttpServer.create(address, 0);
     executor =
         Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
@@ -106,7 +109,8 @@ public final class ApiServer implements AutoCloseable {
       ParcelRelocationDao relocations,
       ParcelQueryService parcelQueries,
       ExceptionService exceptionService,
-      UserService userService) {
+      UserService userService,
+      ParcelService parcelService) {
     router.add(new Route("GET", "/api/health", false, null, context -> Map.of("status", "UP")));
     router.add(
         new Route(
@@ -249,6 +253,44 @@ public final class ApiServer implements AutoCloseable {
                     enumValue(ParcelStatus.class, request.targetStatus(), "目标状态无效。"),
                     requireText(request.resolution(), "处理结果必填。"),
                     c.user().id());
+              }));
+    }
+    if (parcelService != null) {
+      router.add(
+          new Route(
+              "POST",
+              "/api/parcels/inbound",
+              true,
+              null,
+              c -> {
+                InboundParcelRequest request = json.read(c.body(), InboundParcelRequest.class);
+                return ParcelDto.from(
+                    parcelService.inbound(
+                        new InboundRequest(
+                            request.trackingNo(),
+                            requireText(request.courierCompany(), "快递公司必填。"),
+                            request.customerMobile(),
+                            null,
+                            c.user().id(),
+                            request.remark())));
+              }));
+      router.add(
+          new Route(
+              "POST",
+              "/api/parcels/{id}/outbound",
+              true,
+              null,
+              c -> {
+                long id = parseId(c.pathParameter("id"));
+                OutboundParcelRequest request = json.read(c.body(), OutboundParcelRequest.class);
+                var current =
+                    parcels
+                        .findById(id)
+                        .orElseThrow(
+                            () -> new HttpErrorException(404, "快件不存在。", "PARCEL_NOT_FOUND"));
+                if (!current.pickupCode().equals(request.pickupCode()))
+                  throw new BadRequestException("取件码与快件不匹配。", "PARCEL_MISMATCH");
+                return ParcelDto.from(parcelService.outbound(request.pickupCode(), c.user().id()));
               }));
     }
     if (userService != null && warehouse != null) {

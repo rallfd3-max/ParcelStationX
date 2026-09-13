@@ -107,7 +107,8 @@ class ManagementApiTest {
             relocations,
             new ParcelQueryService(parcels, customers, users, shelves, slots, events, relocations),
             new ExceptionService(tx, new ExceptionRecordDaoImpl(cp), parcels, events, logs),
-            new UserService(users, passwords));
+            new UserService(users, passwords),
+            new ParcelService(tx, customers, shelves, parcels, events, logs));
     server.start();
     base = "http://127.0.0.1:" + server.port();
   }

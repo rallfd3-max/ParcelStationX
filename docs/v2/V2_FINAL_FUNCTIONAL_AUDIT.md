@@ -38,4 +38,4 @@
 
 ## 仍需外部验收
 
-真实 MySQL migration/schema/seed、非 skipped integration profile，以及 Chrome/Edge 的完整交互与视觉验收仍未执行，因此 Phase 8 保持 `IN_PROGRESS`。
+真实 MySQL migration/schema/seed 与非 skipped integration profile 已通过。应用内浏览器已验证登录、Dashboard 真实指标和 Web 快速入库；Chrome/Edge 的完整交互与视觉验收仍未全部执行，因此 Phase 8 保持 `IN_PROGRESS`。

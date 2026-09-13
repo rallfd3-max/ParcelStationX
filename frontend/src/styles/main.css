@@ -34,6 +34,7 @@ nav a:hover, nav a.router-link-active { color: #e7f8ff; border-color: var(--cyan
 .chart-card header { display: flex; justify-content: space-between; color: #cfe1ec; }
 .chart-card header small { color: #4b7189; letter-spacing: .14em; }
 .chart { height: 310px; }
+.chart-state{height:310px;display:grid;place-items:center;color:#607d91}
 .state-panel { padding: 30px; color: #86a0b3; }
 .error { color: #ff7d89 !important; }
 .login-page { min-height: 100vh; display: grid; grid-template-columns: 1.2fr .8fr; align-items: center; max-width: 1300px; margin: auto; padding: 60px; gap: 100px; }

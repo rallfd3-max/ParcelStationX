@@ -3,7 +3,7 @@
 V2.1.1 hotfix rule: work only on camera-focus correctness and real ECharts line/pie visualization. Do not reopen unrelated V2.1 features.
 
 ## Phase H1 — Real Line/Pie Charts
-Status: TODO
+Status: DONE
 
 Replace the current bar-only chart behavior for trend/distribution sections. Add at least one real line chart for 7/14/30-day inbound/outbound/inventory trends and at least one real pie/donut chart for courier/status/exception distribution. Data must come from existing real dashboard APIs. Add loading/empty/resize/dispose behavior and frontend tests.
 

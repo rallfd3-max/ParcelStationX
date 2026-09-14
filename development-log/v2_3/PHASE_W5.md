@@ -27,3 +27,11 @@
 
 - W5 完成时验收库保留 E/F/G 区动态货架作为真实持久化证据；不是 frontend mock。
 - V2.2 长结构化运营洞察 >30s 是既知限制，本 W5 未通过删除功能或伪造 AI 结果规避；在 V2.1.2 3D 交互修复后统一优化。
+
+## 2026-09-14 运行时路由修复回归
+
+- 浏览器的“接口不存在”并非此分支缺少 handler。审计发现 8080 的 Java classpath 和 5173 的 Vite root 都指向旧 `ParcelStationX` checkout；它们不含本分支的 Warehouse Agent 集成。
+- 明确停止已核对 PID 的旧进程，并从 `ParcelStationX-dynamic-shelf-agent` 启动后端和 Vite。`GET /api/health` 返回 `warehouseAgent: true`、`aiEnabled: true`；经 Vite proxy 的未认证 `POST /api/ai/warehouse/plan` 返回 401，而非 404。
+- 真实 ADMIN 在浏览器输入“帮我在E区增加1个货架，每个5层6列”。MaiMaiYa 约 5.1 秒生成 `CREATE_SHELF` 预览，预览前后 MySQL 保持 8 Shelf / 240 Slot；确认后一个事务写入，页面为 9 Shelf / 270 Slot，Settings、2D 与 3D 均出现 E-01。该验证货架随后按用户要求作为测试数据清理。
+- 新增安全诊断：health 仅报告 agent/AI capability 布尔值；启动日志仅报告 AI 是否启用和 agent route 状态。未记录或提交任何数据库、AI 密钥或私有配置。
+- `ManagementApiTest` 现在覆盖未认证 401、STAFF 403、精确路径的 ADMIN handler，以及尾随斜杠 404，防止静默路由回归。

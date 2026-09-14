@@ -126,6 +126,8 @@ public final class ParcelStationWebApplication {
       server.start();
       overdueScheduler.start();
       System.out.println("ParcelStationX Web API listening on http://127.0.0.1:" + server.port());
+      System.out.println("AI enabled: " + aiConfig.enabled());
+      System.out.println("Warehouse Agent route: enabled");
     } catch (AppException | IOException | NumberFormatException exception) {
       System.err.println("Unable to start ParcelStationX Web API: " + exception.getMessage());
     }

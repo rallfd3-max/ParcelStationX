@@ -21,6 +21,31 @@ src/main/resources/db/seed.sql
 2. 在 `frontend` 目录执行 `npm install`、`npm run dev`。
 3. 浏览器打开 Vite 输出的地址（通常为 `http://localhost:5173`）。
 
+Windows PowerShell 建议从当前工作树启动，避免 8080 还在运行另一个项目的旧后端：
+
+```powershell
+cd C:\Users\19707\Documents\ChatGPT\ParcelStationX-dynamic-shelf-agent
+mvn clean package -DskipTests
+mvn exec:java "-Dexec.mainClass=com.parcelstationx.app.ParcelStationWebApplication"
+```
+
+前端另开一个 PowerShell：
+
+```powershell
+cd C:\Users\19707\Documents\ChatGPT\ParcelStationX-dynamic-shelf-agent\frontend
+npm install
+npm run dev
+```
+
+如果前端显示“接口不存在”，检查 8080 指向的 JVM 工作树：
+
+```powershell
+netstat -ano | findstr :8080
+Get-CimInstance Win32_Process -Filter "ProcessId=<PID>" | Select-Object ProcessId,CommandLine,ExecutablePath
+```
+
+`GET /api/health` 会返回 `warehouseAgent` 和 `aiEnabled` 布尔值，且不包含任何数据库或 AI 凭据。`/api/ai/warehouse/plan` 必须使用无尾斜杠的精确路径。
+
 演示账号：`admin`、`staff01`、`staff02`；初始密码：`admin123`。仅限本地课程演示。原 Swing 客户端可运行 `com.parcelstationx.app.ParcelStationApplication`。
 
 ## V2.2 AI Provider：MaiMaiYa

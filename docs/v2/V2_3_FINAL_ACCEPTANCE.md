@@ -59,6 +59,12 @@ npm run build                                         PASS
 
 The frontend build retains its existing large-chunk warning; it is non-fatal.
 
+## Runtime route repair regression
+
+On 2026-09-14 a browser showed `接口不存在` for the warehouse agent. Source audit verified the V2.3 handler and the exact frontend path were present. The actual cause was process drift: both ports were served from the old `ParcelStationX` checkout rather than this branch. After starting this branch's Java server and Vite process, `/api/health` safely reported `warehouseAgent: true` and `aiEnabled: true`; the proxied unauthenticated plan route returned 401 rather than 404.
+
+An administrator then submitted `帮我在E区增加1个货架，每个5层6列`. MaiMaiYa generated the pending `CREATE_SHELF` preview in about 5.1 seconds. MySQL stayed at 8 shelves / 240 slots until confirm; after confirmation it became 9 / 270 and E-01 appeared in Settings, Warehouse 2D and Digital Twin. The temporary E-01 acceptance fixture was removed afterwards because it was test-created data. Diagnostics expose only boolean capability state and never configuration values or credentials.
+
 ## Related V2.2 follow-up
 
 The former long structured operations-insight timeout was addressed after the V2.1.2 hotfix. Java now sends compact local aggregates, constrains this request to 320 output tokens / 20 seconds and provides a deterministic local fallback for transient provider failures. The real MaiMaiYa Dashboard request completed in about 9.6 seconds without exposing credentials.

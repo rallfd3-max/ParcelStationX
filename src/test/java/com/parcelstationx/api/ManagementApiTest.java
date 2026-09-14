@@ -236,7 +236,9 @@ class ManagementApiTest {
   void warehouseAgentRequiresPlanThenExplicitAdminConfirmation() throws Exception {
     String command = "{\"command\":\"帮我在E区增加4个货架，每个5层6列，主通道宽一点\"}";
     String admin = login("admin");
+    assertEquals(401, request("POST", "/api/ai/warehouse/plan", command, null).statusCode());
     assertEquals(403, request("POST", "/api/ai/warehouse/plan", command, login("staff")).statusCode());
+    assertEquals(404, request("POST", "/api/ai/warehouse/plan/", command, admin).statusCode());
 
     JsonNode plan = data(request("POST", "/api/ai/warehouse/plan", command, admin));
     assertEquals("PENDING", plan.get("status").asText());

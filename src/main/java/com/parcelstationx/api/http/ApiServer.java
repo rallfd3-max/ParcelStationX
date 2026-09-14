@@ -312,7 +312,17 @@ public final class ApiServer implements AutoCloseable {
       AiFeatureServices aiServices,
       ShelfManagementService shelfManagement,
       com.parcelstationx.warehouseagent.WarehouseAgentService warehouseAgent) {
-    router.add(new Route("GET", "/api/health", false, null, context -> Map.of("status", "UP")));
+    router.add(
+        new Route(
+            "GET",
+            "/api/health",
+            false,
+            null,
+            context ->
+                Map.of(
+                    "status", "UP",
+                    "warehouseAgent", warehouseAgent != null,
+                    "aiEnabled", aiConfig != null && aiConfig.enabled())));
     if (aiConfig != null) {
       router.add(new Route("GET", "/api/ai/status", true, null, context -> aiConfig.status()));
     }

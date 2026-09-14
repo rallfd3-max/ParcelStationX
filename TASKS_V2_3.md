@@ -21,6 +21,12 @@ Do not implement V2.2 MaiMaiYa infrastructure again. V2.3 must reuse it during f
 ## Phase W1 — Deterministic Shelf Management
 Status: DONE
 
+### 2026-09-14 runtime-route repair
+
+- Audited a browser-reported `接口不存在`: the V2.3 source route and frontend path were already correct; port 8080 and port 5173 were occupied by the legacy `ParcelStationX` checkout.
+- Replaced those stale local processes with this branch's backend and Vite server. The proxied unauthenticated route now returns `401 UNAUTHORIZED` rather than `404`; an authenticated ADMIN completed real MaiMaiYa plan, preview and confirm verification.
+- Added non-secret `/api/health` capability fields, startup diagnostics and route regression coverage so a stale runtime can be identified without exposing configuration.
+
 Build the server-side dynamic shelf foundation before AI.
 
 Required:

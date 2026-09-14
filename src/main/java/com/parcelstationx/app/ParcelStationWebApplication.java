@@ -23,6 +23,7 @@ import com.parcelstationx.service.ParcelQueryService;
 import com.parcelstationx.service.ParcelService;
 import com.parcelstationx.service.PasswordHasher;
 import com.parcelstationx.service.RelocationService;
+import com.parcelstationx.service.ShelfManagementService;
 import com.parcelstationx.service.TransactionRunner;
 import com.parcelstationx.service.UserService;
 import com.parcelstationx.service.WarehouseLayoutService;
@@ -50,6 +51,7 @@ public final class ParcelStationWebApplication {
       var logs = new OperationLogDaoImpl(connections);
       var transaction = new TransactionRunner(connections);
       var warehouse = new WarehouseLayoutService(shelves, layouts, slots, parcels);
+      var shelfManagement = new ShelfManagementService(transaction, shelves, layouts, slots, logs);
       var customers = new CustomerDaoImpl(connections);
       var parcelService = new ParcelService(transaction, customers, shelves, parcels, events, logs);
       var relocationService =
@@ -80,7 +82,8 @@ public final class ParcelStationWebApplication {
               parcelService,
               dashboardAnalytics,
               aiConfig,
-              aiServices);
+              aiServices,
+              shelfManagement);
       Runtime.getRuntime().addShutdownHook(new Thread(server::close, "parcel-api-shutdown"));
       server.start();
       System.out.println("ParcelStationX Web API listening on http://127.0.0.1:" + server.port());

@@ -96,6 +96,7 @@ class ManagementApiTest {
     var logs = new OperationLogDaoImpl(cp);
     var tx = new TransactionRunner(cp);
     var warehouse = new WarehouseLayoutService(shelves, layouts, slots, parcels);
+    var shelfManagement = new ShelfManagementService(tx, shelves, layouts, slots, logs);
     server =
         new ApiServer(
             new InetSocketAddress("127.0.0.1", 0),
@@ -108,7 +109,11 @@ class ManagementApiTest {
             new ParcelQueryService(parcels, customers, users, shelves, slots, events, relocations),
             new ExceptionService(tx, new ExceptionRecordDaoImpl(cp), parcels, events, logs),
             new UserService(users, passwords),
-            new ParcelService(tx, customers, shelves, parcels, events, logs));
+            new ParcelService(tx, customers, shelves, parcels, events, logs),
+            null,
+            null,
+            null,
+            shelfManagement);
     server.start();
     base = "http://127.0.0.1:" + server.port();
   }
@@ -179,6 +184,26 @@ class ManagementApiTest {
     assertEquals(
         400,
         request("PUT", "/api/admin/slots/1/enabled", "{\"enabled\":false}", token).statusCode());
+  }
+
+  @Test
+  void shelfPreviewIsReadOnlyAndAdminCanCreateBatchWhileStaffIsForbidden() throws Exception {
+    String body =
+        "{\"zone\":\"E区\",\"count\":4,\"levels\":5,\"columns\":6,\"width\":3.6,\"height\":2.6,\"depth\":0.8}";
+    String admin = login("admin");
+    JsonNode preview = data(request("POST", "/api/admin/shelves/preview", body, admin));
+    assertEquals(4, preview.get("shelfCount").asInt());
+    assertEquals(120, preview.get("slotCount").asInt());
+    assertEquals(
+        1, data(request("GET", "/api/admin/warehouse", null, admin)).get("shelves").size());
+
+    assertEquals(
+        403, request("POST", "/api/admin/shelves/batch", body, login("staff")).statusCode());
+    JsonNode created = data(request("POST", "/api/admin/shelves/batch", body, admin));
+    assertEquals(4, created.get("shelfCount").asInt());
+    JsonNode snapshot = data(request("GET", "/api/admin/warehouse", null, admin));
+    assertEquals(5, snapshot.get("shelves").size());
+    assertEquals(121, snapshot.get("slots").size());
   }
 
   private String login(String user) throws Exception {

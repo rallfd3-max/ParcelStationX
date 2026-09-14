@@ -19,7 +19,7 @@ Do not implement V2.2 MaiMaiYa infrastructure again. V2.3 must reuse it during f
 ---
 
 ## Phase W1 — Deterministic Shelf Management
-Status: TODO
+Status: DONE
 
 Build the server-side dynamic shelf foundation before AI.
 

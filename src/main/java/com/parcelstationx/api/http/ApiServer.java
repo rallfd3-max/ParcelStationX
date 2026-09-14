@@ -45,6 +45,7 @@ public final class ApiServer implements AutoCloseable {
         null,
         null,
         null,
+        null,
         null);
   }
 
@@ -68,6 +69,7 @@ public final class ApiServer implements AutoCloseable {
         warehouse,
         relocationService,
         relocations,
+        null,
         null,
         null,
         null,
@@ -191,6 +193,41 @@ public final class ApiServer implements AutoCloseable {
       AiClientConfig aiConfig,
       AiFeatureServices aiServices)
       throws IOException {
+    this(
+        address,
+        authentication,
+        parcels,
+        sessions,
+        warehouse,
+        relocationService,
+        relocations,
+        parcelQueries,
+        exceptionService,
+        userService,
+        parcelService,
+        dashboardAnalytics,
+        aiConfig,
+        aiServices,
+        null);
+  }
+
+  public ApiServer(
+      InetSocketAddress address,
+      AuthenticationService authentication,
+      ParcelDao parcels,
+      SessionManager sessions,
+      WarehouseLayoutService warehouse,
+      RelocationService relocationService,
+      ParcelRelocationDao relocations,
+      ParcelQueryService parcelQueries,
+      ExceptionService exceptionService,
+      UserService userService,
+      ParcelService parcelService,
+      DashboardAnalyticsService dashboardAnalytics,
+      AiClientConfig aiConfig,
+      AiFeatureServices aiServices,
+      ShelfManagementService shelfManagement)
+      throws IOException {
     JsonCodec json = new JsonCodec();
     Router router = new Router(json, sessions);
     registerRoutes(
@@ -208,7 +245,8 @@ public final class ApiServer implements AutoCloseable {
         parcelService,
         dashboardAnalytics,
         aiConfig,
-        aiServices);
+        aiServices,
+        shelfManagement);
     server = HttpServer.create(address, 0);
     executor =
         Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
@@ -231,7 +269,8 @@ public final class ApiServer implements AutoCloseable {
       ParcelService parcelService,
       DashboardAnalyticsService dashboardAnalytics,
       AiClientConfig aiConfig,
-      AiFeatureServices aiServices) {
+      AiFeatureServices aiServices,
+      ShelfManagementService shelfManagement) {
     router.add(new Route("GET", "/api/health", false, null, context -> Map.of("status", "UP")));
     if (aiConfig != null) {
       router.add(new Route("GET", "/api/ai/status", true, null, context -> aiConfig.status()));
@@ -477,6 +516,40 @@ public final class ApiServer implements AutoCloseable {
                         request.displayName(),
                         enumValue(UserRole.class, request.role(), "角色无效。")));
               }));
+      if (shelfManagement != null) {
+        router.add(
+            new Route(
+                "POST",
+                "/api/admin/shelves/preview",
+                true,
+                UserRole.ADMIN,
+                c -> {
+                  BatchCreateShelvesRequest request =
+                      json.read(c.body(), BatchCreateShelvesRequest.class);
+                  return shelfManagement.preview(toCreationRequest(request));
+                }));
+        router.add(
+            new Route(
+                "POST",
+                "/api/admin/shelves",
+                true,
+                UserRole.ADMIN,
+                c -> {
+                  CreateShelfRequest request = json.read(c.body(), CreateShelfRequest.class);
+                  return shelfManagement.create(toCreationRequest(request), c.user().id());
+                }));
+        router.add(
+            new Route(
+                "POST",
+                "/api/admin/shelves/batch",
+                true,
+                UserRole.ADMIN,
+                c -> {
+                  BatchCreateShelvesRequest request =
+                      json.read(c.body(), BatchCreateShelvesRequest.class);
+                  return shelfManagement.create(toCreationRequest(request), c.user().id());
+                }));
+      }
       router.add(
           new Route(
               "PUT",
@@ -535,6 +608,47 @@ public final class ApiServer implements AutoCloseable {
                 return warehouse.setSlotEnabled(parseId(c.pathParameter("id")), request.enabled());
               }));
     }
+  }
+
+  private static ShelfCreationRequest toCreationRequest(BatchCreateShelvesRequest request) {
+    if (request == null
+        || request.count() == null
+        || request.levels() == null
+        || request.columns() == null
+        || request.width() == null
+        || request.height() == null
+        || request.depth() == null) {
+      throw new BadRequestException("count、levels、columns 和尺寸必填。", "MISSING_FIELD");
+    }
+    return new ShelfCreationRequest(
+        null,
+        request.zone(),
+        request.count(),
+        request.levels(),
+        request.columns(),
+        request.width(),
+        request.height(),
+        request.depth());
+  }
+
+  private static ShelfCreationRequest toCreationRequest(CreateShelfRequest request) {
+    if (request == null
+        || request.levels() == null
+        || request.columns() == null
+        || request.width() == null
+        || request.height() == null
+        || request.depth() == null) {
+      throw new BadRequestException("levels、columns 和尺寸必填。", "MISSING_FIELD");
+    }
+    return new ShelfCreationRequest(
+        request.shelfCode(),
+        request.zone(),
+        1,
+        request.levels(),
+        request.columns(),
+        request.width(),
+        request.height(),
+        request.depth());
   }
 
   private static String requireText(String value, String message) {

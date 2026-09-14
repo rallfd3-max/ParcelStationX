@@ -61,6 +61,23 @@ public final class ShelfLayoutDaoImpl extends AbstractJdbcDao<ShelfLayout>
     }
   }
 
+  @Override
+  public ShelfLayout save(java.sql.Connection connection, ShelfLayout value) {
+    String sql =
+        "INSERT INTO shelf_layout(shelf_id,position_x,position_y,position_z,rotation_y,width,height,depth,columns_count,levels_count,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE position_x=VALUES(position_x),position_y=VALUES(position_y),position_z=VALUES(position_z),rotation_y=VALUES(rotation_y),width=VALUES(width),height=VALUES(height),depth=VALUES(depth),columns_count=VALUES(columns_count),levels_count=VALUES(levels_count),updated_at=VALUES(updated_at)";
+    try (var statement = connection.prepareStatement(sql)) {
+      bindInsert(statement, value);
+      if (statement.executeUpdate() < 1) {
+        throw new com.parcelstationx.exception.DatabaseException(
+            "Expected at least one affected layout row.", null);
+      }
+      return value;
+    } catch (java.sql.SQLException exception) {
+      throw new com.parcelstationx.exception.DatabaseException(
+          "ShelfLayoutDaoImpl failed to save.", exception);
+    }
+  }
+
   private static void bindInsert(java.sql.PreparedStatement statement, ShelfLayout value)
       throws java.sql.SQLException {
     statement.setLong(1, value.shelfId());

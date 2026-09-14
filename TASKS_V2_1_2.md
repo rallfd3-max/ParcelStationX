@@ -3,7 +3,7 @@
 Execution rule: this is a focused correctness hotfix for the current V2.1/V2.2 baseline. Complete H1 -> H2 -> H3 without waiting for user confirmation unless blocked by unavailable browser/runtime access.
 
 ## H1 — Camera Front-Focus Correctness
-Status: TODO
+Status: DONE
 
 Fix parcel focus so the final camera is on the selected shelf's logical front side and looks at the actual rendered Parcel Object3D world position.
 

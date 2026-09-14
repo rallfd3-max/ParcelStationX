@@ -58,7 +58,7 @@ Acceptance:
 - tests cover intent/filters/action validation.
 
 ## Phase AI-4 — Intelligent Notifications
-Status: TODO
+Status: DONE
 
 Wire existing NotificationService/NotificationQueue/NotificationGateway into ParcelStationWebApplication and ParcelService. Add stable MockSmsGateway for course demo. Keep inbound notification strictly after successful transaction commit. Add safe notification content generation: deterministic fallback template plus optional MaiMaiYa AI placeholder-template polish; do not send real mobile/pickupCode to GPT. Add configurable overdue stages (default 7,10,15 days), ScheduledExecutorService scanner, persistent dedupe by parcel + notification stage, retry limits, send-time IN_STOCK recheck and shutdown cleanup.
 

@@ -20,6 +20,10 @@ public final class AppConfig {
     return AiClientConfig.load(loadProperties(), System.getenv());
   }
 
+  public static NotificationConfig loadNotificationConfig() {
+    return NotificationConfig.load(loadProperties(), System.getenv());
+  }
+
   private static Properties loadProperties() {
     Properties properties = new Properties();
     try (InputStream input =

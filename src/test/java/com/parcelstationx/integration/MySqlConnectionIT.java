@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.sql.DriverManager;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class MySqlConnectionIT {
@@ -53,13 +55,18 @@ class MySqlConnectionIT {
           connection
               .createStatement()
               .executeQuery(
-                  "SELECT s.id,s.occupied,COUNT(p.id) FROM shelves s LEFT JOIN shelf_slots ss ON ss.shelf_id=s.id LEFT JOIN parcels p ON p.slot_id=ss.id AND p.status IN ('IN_STOCK','EXCEPTION') GROUP BY s.id,s.occupied ORDER BY s.id")) {
+                  "SELECT s.id,s.shelf_code,s.occupied,COUNT(p.id) FROM shelves s LEFT JOIN shelf_slots ss ON ss.shelf_id=s.id LEFT JOIN parcels p ON p.slot_id=ss.id AND p.status IN ('IN_STOCK','EXCEPTION') GROUP BY s.id,s.shelf_code,s.occupied ORDER BY s.id")) {
         int index = 0;
+        Set<String> codes = new HashSet<>();
         while (rows.next()) {
-          assertEquals(rows.getInt(3), rows.getInt(2));
+          codes.add(rows.getString(2));
+          assertEquals(rows.getInt(4), rows.getInt(3));
           index++;
         }
-        assertEquals(8, index, "V2.1 migration must expose all eight business shelves");
+        assertTrue(index >= 8, "V2.1 baseline shelves must remain after dynamic shelf creation");
+        assertTrue(
+            codes.containsAll(
+                Set.of("A-01", "A-02", "B-01", "B-02", "C-01", "C-02", "D-01", "D-02")));
       }
       try (var rows =
           connection.createStatement().executeQuery("SELECT COUNT(*) FROM shelf_slots")) {

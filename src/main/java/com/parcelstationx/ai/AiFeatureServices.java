@@ -1,4 +1,6 @@
 package com.parcelstationx.ai;
 
 public record AiFeatureServices(
-    AiOperationsService operations, AiExceptionAdviceService exceptionAdvice) {}
+    AiOperationsService operations,
+    AiExceptionAdviceService exceptionAdvice,
+    AiAssistantService assistant) {}

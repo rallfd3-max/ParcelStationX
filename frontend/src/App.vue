@@ -12,6 +12,7 @@ const navigation = computed(() => [
   { to: '/digital-twin', label: '数字孪生' },
   { to: '/parcels', label: '快件' },
   { to: '/exceptions', label: '异常件' },
+  { to: '/ai', label: 'AI 助手' },
   ...(session.isAdmin ? [{ to: '/settings', label: '系统设置' }] : []),
 ])
 async function logout() { await session.logout(); await router.push('/login') }

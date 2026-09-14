@@ -63,7 +63,10 @@ public final class ParcelStationWebApplication {
       var aiServices =
           new AiFeatureServices(
               new AiOperationsService(aiClient, dashboardAnalytics, validator),
-              new AiExceptionAdviceService(aiClient, exceptionService, parcels, validator));
+              new AiExceptionAdviceService(aiClient, exceptionService, parcels, validator),
+              new AiAssistantService(
+                  new AiIntentParser(aiClient, validator),
+                  new AiQueryExecutor(warehouse, exceptionService, dashboardAnalytics)));
       var server =
           new ApiServer(
               new InetSocketAddress("127.0.0.1", port),

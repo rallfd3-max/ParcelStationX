@@ -258,6 +258,18 @@ public final class ApiServer implements AutoCloseable {
                 }
                 return aiServices.exceptionAdvice().advise(request.exceptionId());
               }));
+      if (aiServices.assistant() != null) {
+        router.add(
+            new Route(
+                "POST",
+                "/api/ai/query",
+                true,
+                null,
+                context -> {
+                  AiQueryRequest request = json.read(context.body(), AiQueryRequest.class);
+                  return aiServices.assistant().query(requireText(request.question(), "问题必填。"));
+                }));
+      }
     }
     if (dashboardAnalytics != null) {
       router.add(

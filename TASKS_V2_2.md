@@ -45,7 +45,7 @@ Acceptance:
 - tests cover invalid model output and fallback/error UI.
 
 ## Phase AI-3 — Global Assistant & 3D Link
-Status: TODO
+Status: DONE
 
 Add `/ai` global assistant page and navigation. Implement whitelist natural-language intents: PARCEL_SEARCH, OVERDUE_PARCELS, PARCEL_LOCATE, SHELF_AVAILABILITY, SHELF_UTILIZATION, UNRESOLVED_EXCEPTIONS, TODAY_SUMMARY, UNSUPPORTED. GPT through MaiMaiYa only parses intent/filters; Java validates and executes existing Service/DAO queries with PreparedStatement. Never execute model-generated SQL. Return constrained actions such as FOCUS_PARCEL. Reuse `/digital-twin?parcelId=...` / WarehouseScene.focusParcel for 3D navigation.
 

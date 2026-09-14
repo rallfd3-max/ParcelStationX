@@ -31,6 +31,8 @@ export interface DashboardDistributions { courier:Record<string,number>;status:R
 export interface DashboardActivity { recentExceptions:ExceptionRecord[];recentOperations:Array<{id:number;userId:number;operationType:string;targetType:string;targetId:number;description:string;createdAt:string}> }
 export interface AiOperationsInsight { summary:string;risks:string[];recommendations:string[] }
 export interface AiExceptionAdvice { suggestedType:string;riskLevel:'LOW'|'MEDIUM'|'HIGH';reason:string;steps:string[];suggestedResolution:string }
+export interface AiQueryResult { parcelId:number|null;trackingNo:string;slotCode:string|null;shelfCode:string|null;status:string }
+export interface AiQueryResponse { answer:string;results:AiQueryResult[];action:{type:'FOCUS_PARCEL'|'OPEN_PARCEL_DETAIL'|'NONE';parcelId:number|null} }
 
 export interface Shelf { id: number; shelfCode: string; zone: string; capacity: number; occupied: number; status: 'ACTIVE' | 'DISABLED' }
 export interface ShelfLayout { shelfId: number; positionX: number; positionY: number; positionZ: number; rotationY: number; width: number; height: number; depth: number; columns: number; levels: number }

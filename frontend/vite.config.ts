@@ -5,6 +5,6 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [vue()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  server: { proxy: { '/api': 'http://127.0.0.1:8080' } },
+  server: { proxy: { '/api': process.env.VITE_API_PROXY || 'http://127.0.0.1:8080' } },
   test: { environment: 'node' },
 })

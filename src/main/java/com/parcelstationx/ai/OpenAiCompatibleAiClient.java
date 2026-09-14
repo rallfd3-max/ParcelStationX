@@ -8,6 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -28,12 +29,20 @@ public final class OpenAiCompatibleAiClient implements AiClient {
 
   @Override
   public String generate(String systemPrompt, String userPrompt) {
+    return generate(
+        systemPrompt, userPrompt, new AiGenerationOptions(config.maxOutputTokens(), config.timeout()));
+  }
+
+  @Override
+  public String generate(String systemPrompt, String userPrompt, AiGenerationOptions options) {
     if (!config.enabled())
       throw new AiException(AiErrorCode.AI_DISABLED, "AI service is disabled.");
+    int maxTokens = Math.min(config.maxOutputTokens(), options.maxOutputTokens());
+    Duration timeout = options.timeout().compareTo(config.timeout()) > 0 ? config.timeout() : options.timeout();
     Map<String, Object> body =
         Map.of(
             "model", config.model(),
-            "max_tokens", config.maxOutputTokens(),
+            "max_tokens", maxTokens,
             "messages",
                 List.of(
                     Map.of("role", "system", "content", systemPrompt),
@@ -41,7 +50,7 @@ public final class OpenAiCompatibleAiClient implements AiClient {
     try {
       HttpRequest request =
           HttpRequest.newBuilder(config.chatEndpoint())
-              .timeout(config.timeout())
+              .timeout(timeout)
               .header("Authorization", "Bearer " + config.apiKey())
               .header("Content-Type", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body)))

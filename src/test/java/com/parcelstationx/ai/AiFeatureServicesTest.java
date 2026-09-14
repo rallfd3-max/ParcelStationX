@@ -17,13 +17,26 @@ class AiFeatureServicesTest {
     AiOperationsService service =
         new AiOperationsService(
             client,
-            () -> Map.of("todayInbound", 3, "zoneUtilization", Map.of("A", 92.0)),
+            () ->
+                Map.of(
+                    "todayInbound", 3,
+                    "inventory", 10,
+                    "distributions",
+                    Map.of(
+                        "zoneUtilization", Map.of("A", 92.0),
+                        "shelfUtilization", Map.of("A-01", 90.0),
+                        "courier", Map.of("顺丰", 5),
+                        "dwell", Map.of("7天以上", 2)),
+                    "recentActivity",
+                    Map.of("shouldNot", "reach-model")),
             validator);
     var result = service.analyze();
     assertEquals("稳定", result.summary());
     assertTrue(client.lastUserPrompt().contains("todayInbound"));
     assertFalse(client.lastUserPrompt().contains("pickupCode"));
     assertFalse(client.lastUserPrompt().contains("mobile"));
+    assertFalse(client.lastUserPrompt().contains("recentActivity"));
+    assertFalse(client.lastUserPrompt().contains("shouldNot"));
   }
 
   @Test
@@ -32,6 +45,24 @@ class AiFeatureServicesTest {
         new AiOperationsService(new FakeAiClient("not-json"), Map::of, validator);
     assertEquals(
         AiErrorCode.AI_BAD_RESPONSE, assertThrows(AiException.class, service::analyze).code());
+  }
+
+  @Test
+  void operationsInsightFallsBackLocallyWhenRelayTimesOut() {
+    AiOperationsService service =
+        new AiOperationsService(
+            new FakeAiClient(new AiException(AiErrorCode.AI_TIMEOUT, "timeout")),
+            () ->
+                Map.of(
+                    "inventory", 12,
+                    "overdue", 2,
+                    "exceptions", 1,
+                    "slotUtilization", 90.0),
+            validator);
+    var result = service.analyze();
+    assertTrue(result.summary().contains("12"));
+    assertTrue(result.risks().stream().anyMatch(value -> value.contains("2")));
+    assertFalse(result.recommendations().isEmpty());
   }
 
   @Test

@@ -1,7 +1,7 @@
 # Phase AI-5 — Regression, MaiMaiYa Smoke & Defense Docs
 
 日期：2026-09-14
-状态：IN_PROGRESS（真实 Provider 的长结构化响应超时）
+状态：DONE
 
 ## 完成内容
 
@@ -15,15 +15,17 @@
 ## 验证结果
 
 ```text
-mvn clean test                         PASS (56 tests)
+mvn clean test                         PASS (78 tests)
 mvn -Pintegration-test verify          PASS (2 MySQL IT, 0 skipped)
 npm run type-check                     PASS
-npm run test -- --run                  PASS (15 files, 39 tests)
+npm run test -- --run                  PASS (16 files, 46 tests)
 npm run build                          PASS
 V2_2_0 index verification              PASS
 MaiMaiYa short relay smoke             PASS
 ```
 
-## 限制与下一步
+## 长结构化响应优化与最终验收
 
-真实 MaiMaiYa 模型在 30 秒内没有完成 Dashboard 的长结构化运营洞察；前端正确显示 `AI service timed out.`，图表和普通业务没有中断。保留 AI-5 `IN_PROGRESS`，待 Provider/model 的长生成稳定后复测首页洞察、异常建议、助手只读查询和 3D focus 的真实 relay 链路。原 V2 Phase 8 的 Chrome/Edge WebGL 验收也仍按既有记录保持进行中。
+- 运营洞察改为 Java 先做本地聚合：只发送核心指标、Top 3 分区/货架利用率、快递与滞留分布，不再传递完整趋势与活动序列。
+- 每次洞察调用限制为 320 output tokens / 20 seconds，响应最多 3 条风险、3 条建议。AI timeout、rate limit 或上游暂时失败时，使用确定性本地聚合洞察；非法结构化输出仍严格拒绝。
+- 真实 MaiMaiYa 运营洞察 API 在约 9.6 秒成功返回合法 JSON；管理员在 Dashboard 点击后正常显示总结、3 条风险和 3 条建议。没有记录 Key 或 endpoint 凭据。

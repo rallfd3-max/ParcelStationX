@@ -2,14 +2,14 @@
 
 ## 结论
 
-截至 2026-09-14，V2.2 AI-1 至 AI-4 已完成，AI-5 为 `IN_PROGRESS`；原 V2 Phase 8 仍为 `IN_PROGRESS`。Java、前端与真实 MySQL 自动质量门通过，但不能宣布最终验收完成。
+截至 2026-09-14，V2.2 AI-1 至 AI-5 已完成；原 V2 Phase 8 仍为 `IN_PROGRESS`。Java、前端与真实 MySQL 自动质量门通过，原 V2 的其他最终验收仍按记录跟进。
 
 | 检查项 | 结果 | 证据 |
 | --- | --- | --- |
-| `mvn clean test` | 通过 | 56 tests，0 failure/error |
+| `mvn clean test` | 通过 | 78 tests，0 failure/error |
 | `mvn -Pintegration-test verify` | 通过 | MySQL，2 个 IT 实际执行，0 skipped |
 | `npm run type-check` | 通过 | Vue TSC 无错误 |
-| `npm run test` | 通过 | 15 个文件、39 个测试 |
+| `npm run test` | 通过 | 16 个文件、46 个测试 |
 | `npm run build` | 通过 | Vite production build 成功 |
 
 覆盖认证权限、HTTP 错误、仓储快照、乐观换位与 409 回滚、拖拽边缘滚动、快件详情/事件/换位、异常创建/处理、ADMIN 用户与布局 API、场景映射、动态相机构图、tooltip 内容、拖拽状态及 500/1000 件性能基线。MySQL IT 已在本机真实数据库完成八架/240 仓位结构和“入库待上架 → 换位 → 占用数变化 → 出库”验证。
@@ -30,4 +30,4 @@ ECharts 路由生命周期修复后，Codex 应用内浏览器连续执行 5 轮
 - 真实 MySQL 已执行并核验 `V2_2_0__ai_notification_indexes.sql` 的三个索引。
 - 已完成真实 MaiMaiYa OpenAI-Compatible 短响应 smoke；报告不包含端点凭据或 Key。
 - 应用内浏览器已验证本地登录、真实 Dashboard 聚合、`/ai` 页面，以及“删除所有快递”被只读白名单拒绝，未触发变更。
-- 长结构化“AI 运营洞察”请求在本机配置的 30 秒超时边界返回可重试错误；Dashboard 的真实图表与普通业务仍可用。此为外部 Provider/model 运行时限制，详细记录见 `V2_2_AI_TEST_REPORT.md`，因此 AI-5 保持进行中。
+- 运营洞察改为发送 Java 本地聚合后的小 context、320-token 结构化输出和 20-second 请求上限。真实 MaiMaiYa Dashboard 返回约 9.6 秒并正常展示总结/风险/建议；暂时性上游故障会返回本地聚合 fallback。

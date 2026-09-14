@@ -59,6 +59,6 @@ npm run build                                         PASS
 
 The frontend build retains its existing large-chunk warning; it is non-fatal.
 
-## Known limitation
+## Related V2.2 follow-up
 
-The V2.2 long structured operations-insight request can still exceed 30 seconds. This is not part of the WarehouseActionPlan mutation path and was not hidden with fake AI output. It remains scheduled after the V2.1.2 3D interaction hotfix, using local Java aggregation, smaller prompt context, constrained structured output, a reasonable timeout and a truthful fallback.
+The former long structured operations-insight timeout was addressed after the V2.1.2 hotfix. Java now sends compact local aggregates, constrains this request to 320 output tokens / 20 seconds and provides a deterministic local fallback for transient provider failures. The real MaiMaiYa Dashboard request completed in about 9.6 seconds without exposing credentials.

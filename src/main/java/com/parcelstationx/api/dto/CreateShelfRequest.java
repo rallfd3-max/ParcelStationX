@@ -7,4 +7,8 @@ public record CreateShelfRequest(
     Integer columns,
     Double width,
     Double height,
-    Double depth) {}
+    Double depth,
+    String layoutMode,
+    Integer maxShelvesPerRow,
+    Double shelfGap,
+    Double aisleGap) {}

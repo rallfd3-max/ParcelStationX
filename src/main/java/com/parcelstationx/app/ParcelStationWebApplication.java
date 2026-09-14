@@ -51,7 +51,8 @@ public final class ParcelStationWebApplication {
       var logs = new OperationLogDaoImpl(connections);
       var transaction = new TransactionRunner(connections);
       var warehouse = new WarehouseLayoutService(shelves, layouts, slots, parcels);
-      var shelfManagement = new ShelfManagementService(transaction, shelves, layouts, slots, logs);
+      var shelfManagement =
+          new ShelfManagementService(transaction, shelves, layouts, slots, logs, parcels);
       var customers = new CustomerDaoImpl(connections);
       var parcelService = new ParcelService(transaction, customers, shelves, parcels, events, logs);
       var relocationService =

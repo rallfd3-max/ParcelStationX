@@ -36,6 +36,15 @@ public final class ShelfSlotDaoImpl extends AbstractJdbcDao<ShelfSlot> implement
         (statement, ignored) -> statement.setLong(1, shelfId));
   }
 
+  public List<ShelfSlot> findByShelfId(Connection connection, long shelfId) {
+    return query(
+        connection,
+        "SELECT "
+            + COLUMNS
+            + " FROM shelf_slots WHERE shelf_id=? ORDER BY level_index,column_index",
+        (statement, ignored) -> statement.setLong(1, shelfId));
+  }
+
   @Override
   public ShelfSlot findByIdForUpdate(Connection connection, long id) {
     return queryOne(

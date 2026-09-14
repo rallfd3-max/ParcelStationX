@@ -66,7 +66,7 @@ v2.3-w1: add transactional dynamic shelf management
 ---
 
 ## Phase W2 — Auto Layout, Resize & Safety Rules
-Status: TODO
+Status: DONE
 
 Add deterministic warehouse layout algorithms and safe structural mutation rules.
 

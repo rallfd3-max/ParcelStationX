@@ -96,7 +96,7 @@ class ManagementApiTest {
     var logs = new OperationLogDaoImpl(cp);
     var tx = new TransactionRunner(cp);
     var warehouse = new WarehouseLayoutService(shelves, layouts, slots, parcels);
-    var shelfManagement = new ShelfManagementService(tx, shelves, layouts, slots, logs);
+    var shelfManagement = new ShelfManagementService(tx, shelves, layouts, slots, logs, parcels);
     server =
         new ApiServer(
             new InetSocketAddress("127.0.0.1", 0),
@@ -204,6 +204,27 @@ class ManagementApiTest {
     JsonNode snapshot = data(request("GET", "/api/admin/warehouse", null, admin));
     assertEquals(5, snapshot.get("shelves").size());
     assertEquals(121, snapshot.get("slots").size());
+  }
+
+  @Test
+  void shelfMoveResizeAndDisableRemainAdminOnlyAndEnforceOccupancy() throws Exception {
+    String admin = login("admin");
+    String staff = login("staff");
+    String resize = "{\"levels\":3,\"columns\":3,\"width\":4.5,\"height\":2.8,\"depth\":1.0}";
+    assertEquals(403, request("PUT", "/api/admin/shelves/1", resize, staff).statusCode());
+    assertEquals(200, request("PUT", "/api/admin/shelves/1", resize, admin).statusCode());
+    assertEquals(
+        400,
+        request("PUT", "/api/admin/shelves/1/enabled", "{\"enabled\":false}", admin).statusCode());
+
+    String create =
+        "{\"zone\":\"Z\",\"levels\":2,\"columns\":2,\"width\":3.6,\"height\":2.6,\"depth\":0.8}";
+    JsonNode created = data(request("POST", "/api/admin/shelves", create, admin));
+    long id = created.at("/shelves/0/shelf/id").asLong();
+    assertEquals(
+        200,
+        request("PUT", "/api/admin/shelves/" + id + "/enabled", "{\"enabled\":false}", admin)
+            .statusCode());
   }
 
   private String login(String user) throws Exception {

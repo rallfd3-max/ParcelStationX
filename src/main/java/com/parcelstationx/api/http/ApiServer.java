@@ -549,6 +549,74 @@ public final class ApiServer implements AutoCloseable {
                       json.read(c.body(), BatchCreateShelvesRequest.class);
                   return shelfManagement.create(toCreationRequest(request), c.user().id());
                 }));
+        router.add(
+            new Route(
+                "POST",
+                "/api/admin/warehouse/auto-layout/preview",
+                true,
+                UserRole.ADMIN,
+                c ->
+                    shelfManagement.preview(
+                        toCreationRequest(json.read(c.body(), BatchCreateShelvesRequest.class)))));
+        router.add(
+            new Route(
+                "POST",
+                "/api/admin/warehouse/auto-layout/apply",
+                true,
+                UserRole.ADMIN,
+                c ->
+                    shelfManagement.create(
+                        toCreationRequest(json.read(c.body(), BatchCreateShelvesRequest.class)),
+                        c.user().id())));
+        router.add(
+            new Route(
+                "PUT",
+                "/api/admin/shelves/{id}",
+                true,
+                UserRole.ADMIN,
+                c -> {
+                  ResizeShelfRequest request = json.read(c.body(), ResizeShelfRequest.class);
+                  if (request == null
+                      || request.levels() == null
+                      || request.columns() == null
+                      || request.width() == null
+                      || request.height() == null
+                      || request.depth() == null) {
+                    throw new BadRequestException("层列和尺寸必填。", "MISSING_FIELD");
+                  }
+                  return shelfManagement.resize(
+                      parseId(c.pathParameter("id")),
+                      request.levels(),
+                      request.columns(),
+                      request.width(),
+                      request.height(),
+                      request.depth(),
+                      c.user().id());
+                }));
+        router.add(
+            new Route(
+                "PUT",
+                "/api/admin/shelves/{id}/layout",
+                true,
+                UserRole.ADMIN,
+                c ->
+                    shelfManagement.move(
+                        parseId(c.pathParameter("id")),
+                        json.read(c.body(), ShelfLayout.class),
+                        c.user().id())));
+        router.add(
+            new Route(
+                "PUT",
+                "/api/admin/shelves/{id}/enabled",
+                true,
+                UserRole.ADMIN,
+                c -> {
+                  SetEnabledRequest request = json.read(c.body(), SetEnabledRequest.class);
+                  if (request.enabled() == null)
+                    throw new BadRequestException("enabled 必填。", "MISSING_FIELD");
+                  return shelfManagement.setEnabled(
+                      parseId(c.pathParameter("id")), request.enabled(), c.user().id());
+                }));
       }
       router.add(
           new Route(
@@ -628,7 +696,11 @@ public final class ApiServer implements AutoCloseable {
         request.columns(),
         request.width(),
         request.height(),
-        request.depth());
+        request.depth(),
+        layoutMode(request.layoutMode()),
+        request.maxShelvesPerRow() == null ? 4 : request.maxShelvesPerRow(),
+        request.shelfGap() == null ? .6 : request.shelfGap(),
+        request.aisleGap() == null ? 2.5 : request.aisleGap());
   }
 
   private static ShelfCreationRequest toCreationRequest(CreateShelfRequest request) {
@@ -648,7 +720,17 @@ public final class ApiServer implements AutoCloseable {
         request.columns(),
         request.width(),
         request.height(),
-        request.depth());
+        request.depth(),
+        layoutMode(request.layoutMode()),
+        request.maxShelvesPerRow() == null ? 4 : request.maxShelvesPerRow(),
+        request.shelfGap() == null ? .6 : request.shelfGap(),
+        request.aisleGap() == null ? 2.5 : request.aisleGap());
+  }
+
+  private static ShelfLayoutMode layoutMode(String value) {
+    return value == null || value.isBlank()
+        ? ShelfLayoutMode.GRID
+        : enumValue(ShelfLayoutMode.class, value, "布局模式无效。");
   }
 
   private static String requireText(String value, String message) {

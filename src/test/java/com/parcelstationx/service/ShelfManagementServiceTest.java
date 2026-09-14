@@ -4,12 +4,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.parcelstationx.config.ConnectionProvider;
 import com.parcelstationx.dao.impl.OperationLogDaoImpl;
+import com.parcelstationx.dao.impl.ParcelDaoImpl;
 import com.parcelstationx.dao.impl.ShelfDaoImpl;
 import com.parcelstationx.dao.impl.ShelfLayoutDaoImpl;
 import com.parcelstationx.dao.impl.ShelfSlotDaoImpl;
 import com.parcelstationx.exception.BusinessException;
 import com.parcelstationx.exception.DatabaseException;
+import com.parcelstationx.model.Parcel;
+import com.parcelstationx.model.ParcelStatus;
 import com.parcelstationx.model.Shelf;
+import com.parcelstationx.model.ShelfLayout;
 import com.parcelstationx.model.ShelfSlot;
 import com.parcelstationx.model.ShelfStatus;
 import java.sql.DriverManager;
@@ -22,6 +26,7 @@ class ShelfManagementServiceTest {
   private ShelfLayoutDaoImpl layouts;
   private ShelfSlotDaoImpl slots;
   private OperationLogDaoImpl logs;
+  private ParcelDaoImpl parcels;
   private ShelfManagementService service;
 
   @BeforeEach
@@ -45,14 +50,17 @@ class ShelfManagementServiceTest {
           "CREATE TABLE shelf_slots(id BIGINT AUTO_INCREMENT PRIMARY KEY,shelf_id BIGINT NOT NULL,slot_code VARCHAR(50) NOT NULL UNIQUE,level_index INT NOT NULL,column_index INT NOT NULL,enabled BOOLEAN NOT NULL,created_at TIMESTAMP NOT NULL,UNIQUE(shelf_id,level_index,column_index))");
       statement.execute(
           "CREATE TABLE operation_logs(id BIGINT AUTO_INCREMENT PRIMARY KEY,user_id BIGINT,operation_type VARCHAR(50),target_type VARCHAR(50),target_id BIGINT,description VARCHAR(500),created_at TIMESTAMP)");
+      statement.execute(
+          "CREATE TABLE parcels(id BIGINT AUTO_INCREMENT PRIMARY KEY,tracking_no VARCHAR(100),courier_company VARCHAR(50),customer_id BIGINT,shelf_id BIGINT,pickup_code VARCHAR(20),status VARCHAR(30),arrived_at TIMESTAMP,picked_up_at TIMESTAMP,operator_id BIGINT,remark VARCHAR(255),created_at TIMESTAMP,updated_at TIMESTAMP,slot_id BIGINT UNIQUE,version BIGINT DEFAULT 0)");
     }
     shelves = new ShelfDaoImpl(connections);
     layouts = new ShelfLayoutDaoImpl(connections);
     slots = new ShelfSlotDaoImpl(connections);
     logs = new OperationLogDaoImpl(connections);
+    parcels = new ParcelDaoImpl(connections);
     service =
         new ShelfManagementService(
-            new TransactionRunner(connections), shelves, layouts, slots, logs);
+            new TransactionRunner(connections), shelves, layouts, slots, logs, parcels);
   }
 
   @Test
@@ -111,6 +119,78 @@ class ShelfManagementServiceTest {
     assertTrue(layouts.findAll().isEmpty());
     assertEquals(1, slots.findAll().size());
     assertTrue(logs.findAll().isEmpty());
+  }
+
+  @Test
+  void expansionCreatesOnlyMissingSlotsAndEmptyShrinkDisablesSurplus() {
+    long id = service.create(request(null, "E", 1, 5, 6), 7L).shelves().get(0).shelf().id();
+    service.resize(id, 6, 8, 4.2, 2.8, .8, 7L);
+    assertEquals(48, slots.findByShelfId(id).size());
+    assertEquals(30, slots.findByShelfId(id).stream().filter(s -> s.id() <= 30).count());
+
+    service.resize(id, 4, 4, 3.6, 2.6, .8, 7L);
+    assertEquals(48, slots.findByShelfId(id).size());
+    assertEquals(16, slots.findByShelfId(id).stream().filter(ShelfSlot::enabled).count());
+  }
+
+  @Test
+  void occupiedShrinkAndDisableAreRejectedWithoutChangingSnapshot() {
+    long id = service.create(request(null, "E", 1, 2, 2), 7L).shelves().get(0).shelf().id();
+    ShelfSlot occupied = slots.findByShelfId(id).get(3);
+    var now = LocalDateTime.now();
+    parcels.save(
+        new Parcel(
+            null,
+            "TRACK-W2",
+            "SF",
+            1L,
+            id,
+            "123456",
+            ParcelStatus.IN_STOCK,
+            now,
+            null,
+            7L,
+            "",
+            now,
+            now,
+            occupied.id(),
+            0));
+
+    assertThrows(BusinessException.class, () -> service.resize(id, 1, 1, 3.6, 2.6, .8, 7L));
+    assertEquals(4, slots.findByShelfId(id).stream().filter(ShelfSlot::enabled).count());
+    assertThrows(BusinessException.class, () -> service.setEnabled(id, false, 7L));
+    assertEquals(ShelfStatus.ACTIVE, shelves.findById(id).orElseThrow().status());
+  }
+
+  @Test
+  void moveRejectsCollisionAndSuccessfulMovePreservesSlots() {
+    var first = service.create(request(null, "E", 1, 2, 2), 7L).shelves().get(0);
+    var second = service.create(request(null, "F", 1, 2, 2), 7L).shelves().get(0);
+    ShelfLayout collision =
+        new ShelfLayout(
+            second.shelf().id(),
+            first.layout().positionX(),
+            0,
+            first.layout().positionZ(),
+            0,
+            3.6,
+            2.6,
+            .8,
+            2,
+            2,
+            null);
+    assertThrows(BusinessException.class, () -> service.move(second.shelf().id(), collision, 7L));
+    assertEquals(
+        second.layout().positionZ(),
+        layouts.findById(second.shelf().id()).orElseThrow().positionZ());
+
+    ShelfLayout moved =
+        service.move(
+            second.shelf().id(),
+            new ShelfLayout(second.shelf().id(), 20, 0, 20, 0, 3.6, 2.6, .8, 2, 2, null),
+            7L);
+    assertEquals(20, moved.positionX());
+    assertEquals(4, slots.findByShelfId(second.shelf().id()).size());
   }
 
   private ShelfCreationRequest request(

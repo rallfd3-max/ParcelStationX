@@ -1,5 +1,6 @@
 package com.parcelstationx.config;
 
+import com.parcelstationx.ai.AiClientConfig;
 import com.parcelstationx.exception.ConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +13,14 @@ public final class AppConfig {
   private AppConfig() {}
 
   public static DatabaseConfig loadDatabaseConfig() {
+    return loadDatabaseConfig(loadProperties(), System.getenv());
+  }
+
+  public static AiClientConfig loadAiClientConfig() {
+    return AiClientConfig.load(loadProperties(), System.getenv());
+  }
+
+  private static Properties loadProperties() {
     Properties properties = new Properties();
     try (InputStream input =
         AppConfig.class.getClassLoader().getResourceAsStream(LOCAL_PROPERTIES)) {
@@ -19,10 +28,10 @@ public final class AppConfig {
         properties.load(input);
       }
     } catch (IOException exception) {
-      throw new ConfigurationException("Unable to read local database configuration.", exception);
+      throw new ConfigurationException(
+          "Unable to read local application configuration.", exception);
     }
-
-    return loadDatabaseConfig(properties, System.getenv());
+    return properties;
   }
 
   static DatabaseConfig loadDatabaseConfig(Properties properties, Map<String, String> environment) {

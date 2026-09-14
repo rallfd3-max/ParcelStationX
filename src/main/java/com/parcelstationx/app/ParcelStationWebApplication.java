@@ -1,5 +1,6 @@
 package com.parcelstationx.app;
 
+import com.parcelstationx.ai.OpenAiCompatibleAiClient;
 import com.parcelstationx.api.auth.SessionManager;
 import com.parcelstationx.api.http.ApiServer;
 import com.parcelstationx.config.AppConfig;
@@ -35,6 +36,8 @@ public final class ParcelStationWebApplication {
     int port = Integer.parseInt(System.getenv().getOrDefault("PARCEL_HTTP_PORT", "8080"));
     try {
       var connections = new ConnectionFactory(AppConfig.loadDatabaseConfig());
+      var aiConfig = AppConfig.loadAiClientConfig();
+      if (aiConfig.enabled()) new OpenAiCompatibleAiClient(aiConfig);
       var authentication =
           new AuthenticationService(new UserDaoImpl(connections), new PasswordHasher());
       var users = new UserDaoImpl(connections);
@@ -66,7 +69,9 @@ public final class ParcelStationWebApplication {
                   transaction, new ExceptionRecordDaoImpl(connections), parcels, events, logs),
               new UserService(users, new PasswordHasher()),
               parcelService,
-              new DashboardAnalyticsService(warehouse, new ExceptionRecordDaoImpl(connections), logs));
+              new DashboardAnalyticsService(
+                  warehouse, new ExceptionRecordDaoImpl(connections), logs),
+              aiConfig);
       Runtime.getRuntime().addShutdownHook(new Thread(server::close, "parcel-api-shutdown"));
       server.start();
       System.out.println("ParcelStationX Web API listening on http://127.0.0.1:" + server.port());

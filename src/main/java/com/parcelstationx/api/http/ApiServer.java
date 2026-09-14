@@ -1,5 +1,6 @@
 package com.parcelstationx.api.http;
 
+import com.parcelstationx.ai.AiClientConfig;
 import com.parcelstationx.api.auth.SessionManager;
 import com.parcelstationx.api.dto.*;
 import com.parcelstationx.api.error.BadRequestException;
@@ -29,7 +30,20 @@ public final class ApiServer implements AutoCloseable {
       ParcelDao parcels,
       SessionManager sessions)
       throws IOException {
-    this(address, authentication, parcels, sessions, null, null, null, null, null, null, null);
+    this(
+        address,
+        authentication,
+        parcels,
+        sessions,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   public ApiServer(
@@ -56,6 +70,7 @@ public final class ApiServer implements AutoCloseable {
         null,
         null,
         null,
+        null,
         null);
     server = HttpServer.create(address, 0);
     executor =
@@ -77,14 +92,66 @@ public final class ApiServer implements AutoCloseable {
       UserService userService,
       ParcelService parcelService)
       throws IOException {
-    this(address, authentication, parcels, sessions, warehouse, relocationService, relocations, parcelQueries, exceptionService, userService, parcelService, null);
+    this(
+        address,
+        authentication,
+        parcels,
+        sessions,
+        warehouse,
+        relocationService,
+        relocations,
+        parcelQueries,
+        exceptionService,
+        userService,
+        parcelService,
+        null,
+        null);
   }
 
   public ApiServer(
-      InetSocketAddress address, AuthenticationService authentication, ParcelDao parcels,
-      SessionManager sessions, WarehouseLayoutService warehouse, RelocationService relocationService,
-      ParcelRelocationDao relocations, ParcelQueryService parcelQueries, ExceptionService exceptionService,
-      UserService userService, ParcelService parcelService, DashboardAnalyticsService dashboardAnalytics)
+      InetSocketAddress address,
+      AuthenticationService authentication,
+      ParcelDao parcels,
+      SessionManager sessions,
+      WarehouseLayoutService warehouse,
+      RelocationService relocationService,
+      ParcelRelocationDao relocations,
+      ParcelQueryService parcelQueries,
+      ExceptionService exceptionService,
+      UserService userService,
+      ParcelService parcelService,
+      DashboardAnalyticsService dashboardAnalytics)
+      throws IOException {
+    this(
+        address,
+        authentication,
+        parcels,
+        sessions,
+        warehouse,
+        relocationService,
+        relocations,
+        parcelQueries,
+        exceptionService,
+        userService,
+        parcelService,
+        dashboardAnalytics,
+        null);
+  }
+
+  public ApiServer(
+      InetSocketAddress address,
+      AuthenticationService authentication,
+      ParcelDao parcels,
+      SessionManager sessions,
+      WarehouseLayoutService warehouse,
+      RelocationService relocationService,
+      ParcelRelocationDao relocations,
+      ParcelQueryService parcelQueries,
+      ExceptionService exceptionService,
+      UserService userService,
+      ParcelService parcelService,
+      DashboardAnalyticsService dashboardAnalytics,
+      AiClientConfig aiConfig)
       throws IOException {
     JsonCodec json = new JsonCodec();
     Router router = new Router(json, sessions);
@@ -101,7 +168,8 @@ public final class ApiServer implements AutoCloseable {
         exceptionService,
         userService,
         parcelService,
-        dashboardAnalytics);
+        dashboardAnalytics,
+        aiConfig);
     server = HttpServer.create(address, 0);
     executor =
         Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
@@ -122,12 +190,25 @@ public final class ApiServer implements AutoCloseable {
       ExceptionService exceptionService,
       UserService userService,
       ParcelService parcelService,
-      DashboardAnalyticsService dashboardAnalytics) {
+      DashboardAnalyticsService dashboardAnalytics,
+      AiClientConfig aiConfig) {
     router.add(new Route("GET", "/api/health", false, null, context -> Map.of("status", "UP")));
+    if (aiConfig != null) {
+      router.add(new Route("GET", "/api/ai/status", true, null, context -> aiConfig.status()));
+    }
     if (dashboardAnalytics != null) {
-      router.add(new Route("GET", "/api/dashboard/trends", true, null, c -> dashboardAnalytics.trends()));
-      router.add(new Route("GET", "/api/dashboard/distributions", true, null, c -> dashboardAnalytics.distributions()));
-      router.add(new Route("GET", "/api/dashboard/activity", true, null, c -> dashboardAnalytics.activity()));
+      router.add(
+          new Route("GET", "/api/dashboard/trends", true, null, c -> dashboardAnalytics.trends()));
+      router.add(
+          new Route(
+              "GET",
+              "/api/dashboard/distributions",
+              true,
+              null,
+              c -> dashboardAnalytics.distributions()));
+      router.add(
+          new Route(
+              "GET", "/api/dashboard/activity", true, null, c -> dashboardAnalytics.activity()));
     }
     router.add(
         new Route(

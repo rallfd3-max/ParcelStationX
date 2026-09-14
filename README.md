@@ -45,9 +45,12 @@ PARCEL_AI_BASE_URL=<MaiMaiYa 提供的实际 OpenAI-Compatible API Base URL>
 PARCEL_AI_API_KEY=<仅本机环境变量>
 PARCEL_AI_MODEL=<MaiMaiYa 当前可用模型>
 PARCEL_AI_CHAT_PATH=<MaiMaiYa 实际兼容路径>
+PARCEL_AI_TIMEOUT_SECONDS=15
+PARCEL_AI_MAX_OUTPUT_TOKENS=1200
 ```
 
 AI Key 只能存在于 Java 后端环境变量或未提交的本地配置，禁止写入 Vue、Git、日志、浏览器响应和截图。
+AI 默认关闭；未配置 MaiMaiYa endpoint、Key 或模型时，全部原有业务仍可正常运行。登录后的 `GET /api/ai/status` 只报告启用状态、Provider、模型和配置完整性，不返回 Key 或 Authorization 信息。
 
 Provider 详细规则见：
 

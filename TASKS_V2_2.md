@@ -5,7 +5,7 @@ V2.2 execution rule: start from the earliest TODO/IN_PROGRESS item. Each phase m
 Provider override: before any AI implementation, read `docs/v2/V2_2_AI_PROVIDER_MAIMAIYA.md`. V2.2 uses **MaiMaiYa** as the OpenAI-Compatible relay provider. The provider/account portal is `https://maimaiya.click/profile`; this portal URL must not be assumed to be the actual API Base URL. The real Base URL, chat path and model must come from MaiMaiYa's current account/API configuration and remain runtime-configurable.
 
 ## Phase AI-1 — AI Infrastructure
-Status: TODO
+Status: DONE
 
 Build the MaiMaiYa OpenAI-Compatible relay integration using Java 17 HttpClient. Add environment/config loading for provider, portal URL, actual API base URL, API key, model, chat path, timeout and max tokens. Keep secrets server-side only. Add AiClient abstraction, real MaiMaiYa-compatible relay implementation, fake test implementation, prompt catalog, structured-output validator and `/api/ai/status`. Handle timeout, invalid JSON, 401/403, 429 and 5xx without breaking core ParcelStationX features. Do not add Spring.
 

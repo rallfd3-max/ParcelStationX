@@ -1,6 +1,7 @@
 package com.parcelstationx.api.http;
 
 import com.parcelstationx.ai.AiClientConfig;
+import com.parcelstationx.ai.AiFeatureServices;
 import com.parcelstationx.api.auth.SessionManager;
 import com.parcelstationx.api.dto.*;
 import com.parcelstationx.api.error.BadRequestException;
@@ -43,6 +44,7 @@ public final class ApiServer implements AutoCloseable {
         null,
         null,
         null,
+        null,
         null);
   }
 
@@ -66,6 +68,7 @@ public final class ApiServer implements AutoCloseable {
         warehouse,
         relocationService,
         relocations,
+        null,
         null,
         null,
         null,
@@ -105,6 +108,7 @@ public final class ApiServer implements AutoCloseable {
         userService,
         parcelService,
         null,
+        null,
         null);
   }
 
@@ -135,6 +139,7 @@ public final class ApiServer implements AutoCloseable {
         userService,
         parcelService,
         dashboardAnalytics,
+        null,
         null);
   }
 
@@ -153,6 +158,39 @@ public final class ApiServer implements AutoCloseable {
       DashboardAnalyticsService dashboardAnalytics,
       AiClientConfig aiConfig)
       throws IOException {
+    this(
+        address,
+        authentication,
+        parcels,
+        sessions,
+        warehouse,
+        relocationService,
+        relocations,
+        parcelQueries,
+        exceptionService,
+        userService,
+        parcelService,
+        dashboardAnalytics,
+        aiConfig,
+        null);
+  }
+
+  public ApiServer(
+      InetSocketAddress address,
+      AuthenticationService authentication,
+      ParcelDao parcels,
+      SessionManager sessions,
+      WarehouseLayoutService warehouse,
+      RelocationService relocationService,
+      ParcelRelocationDao relocations,
+      ParcelQueryService parcelQueries,
+      ExceptionService exceptionService,
+      UserService userService,
+      ParcelService parcelService,
+      DashboardAnalyticsService dashboardAnalytics,
+      AiClientConfig aiConfig,
+      AiFeatureServices aiServices)
+      throws IOException {
     JsonCodec json = new JsonCodec();
     Router router = new Router(json, sessions);
     registerRoutes(
@@ -169,7 +207,8 @@ public final class ApiServer implements AutoCloseable {
         userService,
         parcelService,
         dashboardAnalytics,
-        aiConfig);
+        aiConfig,
+        aiServices);
     server = HttpServer.create(address, 0);
     executor =
         Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
@@ -191,10 +230,34 @@ public final class ApiServer implements AutoCloseable {
       UserService userService,
       ParcelService parcelService,
       DashboardAnalyticsService dashboardAnalytics,
-      AiClientConfig aiConfig) {
+      AiClientConfig aiConfig,
+      AiFeatureServices aiServices) {
     router.add(new Route("GET", "/api/health", false, null, context -> Map.of("status", "UP")));
     if (aiConfig != null) {
       router.add(new Route("GET", "/api/ai/status", true, null, context -> aiConfig.status()));
+    }
+    if (aiServices != null) {
+      router.add(
+          new Route(
+              "POST",
+              "/api/ai/operations-insight",
+              true,
+              null,
+              context -> aiServices.operations().analyze()));
+      router.add(
+          new Route(
+              "POST",
+              "/api/ai/exception-advice",
+              true,
+              null,
+              context -> {
+                AiExceptionAdviceRequest request =
+                    json.read(context.body(), AiExceptionAdviceRequest.class);
+                if (request.exceptionId() == null) {
+                  throw new BadRequestException("exceptionId 必填。", "MISSING_FIELD");
+                }
+                return aiServices.exceptionAdvice().advise(request.exceptionId());
+              }));
     }
     if (dashboardAnalytics != null) {
       router.add(

@@ -143,4 +143,8 @@ public final class ExceptionService {
   public List<ExceptionRecord> findAll() {
     return exceptions.findAll();
   }
+
+  public ExceptionRecord findById(long id) {
+    return exceptions.findById(id).orElseThrow(() -> new BusinessException("异常记录不存在。"));
+  }
 }

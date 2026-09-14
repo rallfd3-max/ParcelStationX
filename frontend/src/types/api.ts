@@ -29,6 +29,8 @@ export interface DashboardSummary {
 export interface DashboardTrends { points:Array<{date:string;inbound:number;outbound:number;inventory:number}> }
 export interface DashboardDistributions { courier:Record<string,number>;status:Record<string,number>;exceptionType:Record<string,number>;shelfUtilization:Record<string,number>;zoneUtilization:Record<string,number>;dwell:Record<string,number> }
 export interface DashboardActivity { recentExceptions:ExceptionRecord[];recentOperations:Array<{id:number;userId:number;operationType:string;targetType:string;targetId:number;description:string;createdAt:string}> }
+export interface AiOperationsInsight { summary:string;risks:string[];recommendations:string[] }
+export interface AiExceptionAdvice { suggestedType:string;riskLevel:'LOW'|'MEDIUM'|'HIGH';reason:string;steps:string[];suggestedResolution:string }
 
 export interface Shelf { id: number; shelfCode: string; zone: string; capacity: number; occupied: number; status: 'ACTIVE' | 'DISABLED' }
 export interface ShelfLayout { shelfId: number; positionX: number; positionY: number; positionZ: number; rotationY: number; width: number; height: number; depth: number; columns: number; levels: number }

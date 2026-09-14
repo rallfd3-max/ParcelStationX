@@ -103,6 +103,58 @@ public final class DashboardAnalyticsService {
     return new Activity(recentExceptions, recentOperations);
   }
 
+  public AiContext aiContext() {
+    var snapshot = warehouse.snapshot();
+    LocalDate today = LocalDate.now();
+    long inbound =
+        snapshot.parcels().stream()
+            .filter(parcel -> parcel.arrivedAt().toLocalDate().equals(today))
+            .count();
+    long outbound =
+        snapshot.parcels().stream()
+            .filter(
+                parcel ->
+                    parcel.pickedUpAt() != null && parcel.pickedUpAt().toLocalDate().equals(today))
+            .count();
+    long inventory =
+        snapshot.parcels().stream()
+            .filter(parcel -> parcel.status() == ParcelStatus.IN_STOCK)
+            .count();
+    long exceptionCount =
+        snapshot.parcels().stream()
+            .filter(parcel -> parcel.status() == ParcelStatus.EXCEPTION)
+            .count();
+    long overdue =
+        snapshot.parcels().stream()
+            .filter(parcel -> parcel.status() == ParcelStatus.IN_STOCK)
+            .filter(
+                parcel -> Duration.between(parcel.arrivedAt(), LocalDateTime.now()).toDays() >= 7)
+            .count();
+    long enabledSlots = snapshot.slots().stream().filter(slot -> slot.enabled()).count();
+    long occupiedSlots =
+        snapshot.parcels().stream()
+            .filter(parcel -> parcel.status() != ParcelStatus.PICKED_UP && parcel.slotId() != null)
+            .count();
+    var safeActivity =
+        new SafeActivity(
+            activity().recentExceptions().stream()
+                .map(e -> new SafeException(e.exceptionType().name(), e.status(), e.createdAt()))
+                .toList(),
+            activity().recentOperations().stream()
+                .map(o -> new SafeOperation(o.operationType(), o.targetType(), o.createdAt()))
+                .toList());
+    return new AiContext(
+        inbound,
+        outbound,
+        inventory,
+        exceptionCount,
+        overdue,
+        enabledSlots == 0 ? 0 : Math.round(occupiedSlots * 1000d / enabledSlots) / 10d,
+        trends(),
+        distributions(),
+        safeActivity);
+  }
+
   private static Map<String, Long> count(List<String> values) {
     return values.stream()
         .collect(Collectors.groupingBy(x -> x, LinkedHashMap::new, Collectors.counting()));
@@ -126,4 +178,22 @@ public final class DashboardAnalyticsService {
 
   public record Activity(
       List<ExceptionRecord> recentExceptions, List<OperationLog> recentOperations) {}
+
+  public record SafeException(String exceptionType, String status, LocalDateTime createdAt) {}
+
+  public record SafeOperation(String operationType, String targetType, LocalDateTime createdAt) {}
+
+  public record SafeActivity(
+      List<SafeException> recentExceptions, List<SafeOperation> recentOperations) {}
+
+  public record AiContext(
+      long todayInbound,
+      long todayOutbound,
+      long inventory,
+      long exceptions,
+      long overdue,
+      double slotUtilization,
+      Trends trends,
+      Distributions distributions,
+      SafeActivity recentActivity) {}
 }

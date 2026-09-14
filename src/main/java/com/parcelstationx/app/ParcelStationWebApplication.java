@@ -1,6 +1,6 @@
 package com.parcelstationx.app;
 
-import com.parcelstationx.ai.OpenAiCompatibleAiClient;
+import com.parcelstationx.ai.*;
 import com.parcelstationx.api.auth.SessionManager;
 import com.parcelstationx.api.http.ApiServer;
 import com.parcelstationx.config.AppConfig;
@@ -37,7 +37,7 @@ public final class ParcelStationWebApplication {
     try {
       var connections = new ConnectionFactory(AppConfig.loadDatabaseConfig());
       var aiConfig = AppConfig.loadAiClientConfig();
-      if (aiConfig.enabled()) new OpenAiCompatibleAiClient(aiConfig);
+      var aiClient = new OpenAiCompatibleAiClient(aiConfig);
       var authentication =
           new AuthenticationService(new UserDaoImpl(connections), new PasswordHasher());
       var users = new UserDaoImpl(connections);
@@ -54,6 +54,16 @@ public final class ParcelStationWebApplication {
       var parcelService = new ParcelService(transaction, customers, shelves, parcels, events, logs);
       var relocationService =
           new RelocationService(transaction, parcels, slots, shelves, relocations, events, logs);
+      var exceptionService =
+          new ExceptionService(
+              transaction, new ExceptionRecordDaoImpl(connections), parcels, events, logs);
+      var dashboardAnalytics =
+          new DashboardAnalyticsService(warehouse, new ExceptionRecordDaoImpl(connections), logs);
+      var validator = new AiResponseValidator();
+      var aiServices =
+          new AiFeatureServices(
+              new AiOperationsService(aiClient, dashboardAnalytics, validator),
+              new AiExceptionAdviceService(aiClient, exceptionService, parcels, validator));
       var server =
           new ApiServer(
               new InetSocketAddress("127.0.0.1", port),
@@ -65,13 +75,12 @@ public final class ParcelStationWebApplication {
               relocations,
               new ParcelQueryService(
                   parcels, customers, users, shelves, slots, events, relocations),
-              new ExceptionService(
-                  transaction, new ExceptionRecordDaoImpl(connections), parcels, events, logs),
+              exceptionService,
               new UserService(users, new PasswordHasher()),
               parcelService,
-              new DashboardAnalyticsService(
-                  warehouse, new ExceptionRecordDaoImpl(connections), logs),
-              aiConfig);
+              dashboardAnalytics,
+              aiConfig,
+              aiServices);
       Runtime.getRuntime().addShutdownHook(new Thread(server::close, "parcel-api-shutdown"));
       server.start();
       System.out.println("ParcelStationX Web API listening on http://127.0.0.1:" + server.port());

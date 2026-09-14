@@ -33,7 +33,7 @@ Acceptance:
 - `mvn clean test`, frontend type-check/test/build pass.
 
 ## Phase AI-2 — Operations Insight & Exception Advice
-Status: TODO
+Status: DONE
 
 Add homepage “AI运营洞察” based on real DashboardAnalyticsService data. Add exception “AI处置建议” based on selected exception/parcel context. Send only minimum/sanitized context to MaiMaiYa GPT. Structured outputs must be validated. AI advice must never automatically modify Parcel/Exception state; user confirmation continues through existing ExceptionService.
 

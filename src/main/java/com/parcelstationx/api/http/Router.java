@@ -1,5 +1,6 @@
 package com.parcelstationx.api.http;
 
+import com.parcelstationx.ai.AiException;
 import com.parcelstationx.api.auth.SessionManager;
 import com.parcelstationx.api.error.HttpErrorException;
 import com.parcelstationx.api.json.JsonCodec;
@@ -83,6 +84,9 @@ public final class Router implements HttpHandler {
       write(exchange, error.status(), ApiResponse.failure(error.getMessage(), error.code()));
     } else if (exception instanceof com.parcelstationx.exception.BusinessException) {
       write(exchange, 400, ApiResponse.failure(exception.getMessage(), "BUSINESS_ERROR"));
+    } else if (exception instanceof AiException error) {
+      int status = error.code() == com.parcelstationx.ai.AiErrorCode.AI_UNAUTHORIZED ? 502 : 503;
+      write(exchange, status, ApiResponse.failure(error.getMessage(), error.code().name()));
     } else {
       write(exchange, 500, ApiResponse.failure("服务器内部错误。", "INTERNAL_ERROR"));
     }

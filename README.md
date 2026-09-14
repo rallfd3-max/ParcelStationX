@@ -1,4 +1,4 @@
-# ParcelStationX Digital Twin v2.1
+# ParcelStationX Digital Twin v2.1 / V2.2 AI
 
 ParcelStationX 是《软件设计与开发 II》课程项目。V2 在原 Swing/JDBC 系统上增加 Java 17 `HttpServer` REST API，以及 Vue 3、TypeScript、ECharts、Three.js 数字孪生前端。生产代码不使用 Spring、ORM 或 Lombok。
 
@@ -23,6 +23,47 @@ src/main/resources/db/seed.sql
 
 演示账号：`admin`、`staff01`、`staff02`；初始密码：`admin123`。仅限本地课程演示。原 Swing 客户端可运行 `com.parcelstationx.app.ParcelStationApplication`。
 
+## V2.2 AI Provider：MaiMaiYa
+
+V2.2 的 GPT 能力使用 **MaiMaiYa** 作为 OpenAI-Compatible 中转站 Provider。
+
+账号/API 管理入口：
+
+```text
+https://maimaiya.click/profile
+```
+
+注意：该地址是供应商管理/资料入口，**不能直接假定为实际 API Base URL**。Java 后端真正请求的 Base URL、chat path 和模型必须以 MaiMaiYa 当前账号/API 配置提供的信息为准，并通过环境变量配置。
+
+建议运行时配置：
+
+```text
+PARCEL_AI_ENABLED=true
+PARCEL_AI_PROVIDER=maimaiya
+PARCEL_AI_PORTAL_URL=https://maimaiya.click/profile
+PARCEL_AI_BASE_URL=<MaiMaiYa 提供的实际 OpenAI-Compatible API Base URL>
+PARCEL_AI_API_KEY=<仅本机环境变量>
+PARCEL_AI_MODEL=<MaiMaiYa 当前可用模型>
+PARCEL_AI_CHAT_PATH=<MaiMaiYa 实际兼容路径>
+```
+
+AI Key 只能存在于 Java 后端环境变量或未提交的本地配置，禁止写入 Vue、Git、日志、浏览器响应和截图。
+
+Provider 详细规则见：
+
+```text
+docs/v2/V2_2_AI_PROVIDER_MAIMAIYA.md
+```
+
+V2.2 项目计划、可行性和 Codex 自动开发规范见：
+
+```text
+docs/v2/V2_2_AI_INTELLIGENT_OPERATIONS_PLAN.md
+docs/v2/V2_2_AI_FEASIBILITY_ANALYSIS.md
+TASKS_V2_2.md
+CODEX_V2_2_AI_PROMPT.md
+```
+
 ## 质量检查
 
 ```bash
@@ -38,4 +79,6 @@ MySQL 集成测试仅在三个 `PARCEL_DB_*` 变量齐全时执行；缺失时�
 
 V2.1 首页已合并运营分析，数字孪生支持暂存区快速入库、hover 详情、3D 换位和取件码确认出库；二维仓库支持独立滚动区和拖拽边缘自动滚动。
 
-核心调用方向：`UI/Web -> Service -> DAO -> JDBC -> MySQL`。
+V2.2 计划增加：首页 AI 运营洞察、异常 AI 处置建议、全局自然语言查询、AI 结果联动 3D、入库自动通知与 7/10/15 天滞留提醒。
+
+核心调用方向：`UI/Web -> Service -> DAO -> JDBC -> MySQL`；AI 外部调用方向：`Vue -> ParcelStationX Java API -> AiClient -> MaiMaiYa OpenAI-Compatible API`。

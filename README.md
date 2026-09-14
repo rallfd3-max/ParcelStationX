@@ -84,6 +84,8 @@ V2.1 首页已合并运营分析，数字孪生支持暂存区快速入库、hov
 
 V2.2 已实现：首页基于 `DashboardAnalyticsService` 真实聚合数据的 AI 运营洞察、只生成草稿的异常处置建议、`/ai` 白名单只读查询与 3D 定位、入库后通知，以及 7/10/15 天持久化去重的滞留提醒。模型不能生成或执行 SQL；所有数据读取仍经 Java Service/DAO/JDBC。AI 不可用时，核心入出库、2D/3D、事务和固定通知模板继续可用。
 
+V2.3 已增加管理员专用的 AI Warehouse Agent：MaiMaiYa 仅返回受限的 `WarehouseAgentAction` JSON；Java 再校验 enum 和参数、生成零写入 preview，并且只有管理员显式确认后才会调用 `ShelfManagementService` 的事务创建货架、布局和仓位。模型没有 SQL、DAO、Shell、文件或 HTTP 执行权；确认后刷新统一的 WarehouseSnapshot，因此二维仓库和 Three.js 数字孪生同步更新。
+
 通知默认使用课程版 `MockSmsGateway`，会完整记录 `PENDING → queue → SUCCESS/FAILED`，并在日志中脱敏手机号；没有供应商合同不会伪造真实 SMS Gateway。可用 `PARCEL_OVERDUE_REMINDER_DAYS=7,10,15`、`PARCEL_NOTIFICATION_SCAN_MINUTES`、`PARCEL_NOTIFICATION_MAX_RETRIES` 与 `PARCEL_SMS_MODE=mock` 配置。通知服务只在入库事务提交后运行；滞留扫描在发送前再次读取快件状态，已出库快件不会再提醒。
 
 核心调用方向：`UI/Web -> Service -> DAO -> JDBC -> MySQL`；AI 外部调用方向：`Vue -> ParcelStationX Java API -> AiClient -> MaiMaiYa OpenAI-Compatible API`。

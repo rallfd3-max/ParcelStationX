@@ -266,7 +266,7 @@ v2.3-w4: add confirmed warehouse agent action protocol
 ---
 
 ## Phase W5 — Sync V2.2, MaiMaiYa Integration & Full Regression
-Status: TODO
+Status: IN_PROGRESS
 
 Before real AI integration, synchronize latest `codex/visualization-v2` into `codex/dynamic-shelf-agent` so V2.3 consumes the completed V2.2 AI infrastructure instead of maintaining a duplicate.
 

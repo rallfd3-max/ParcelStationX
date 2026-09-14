@@ -1,4 +1,12 @@
-import type { ExceptionRecord, ParcelDetails } from '@/types/api'
+import type { ExceptionRecord, ParcelDetails, Shelf } from '@/types/api'
+
+export function groupShelvesByZone(shelves: Shelf[]) {
+  const groups = new Map<string, Shelf[]>()
+  for (const shelf of [...shelves].sort((a,b)=>a.shelfCode.localeCompare(b.shelfCode,undefined,{numeric:true}))) {
+    const zone=shelf.zone||'未分区';groups.set(zone,[...(groups.get(zone)??[]),shelf])
+  }
+  return [...groups.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([zone,items])=>({zone,shelves:items}))
+}
 
 export function parcelFocusLocation(parcelId: number, threeDimensional = true) {
   return { path: threeDimensional ? '/digital-twin' : '/warehouse', query: { parcelId } }

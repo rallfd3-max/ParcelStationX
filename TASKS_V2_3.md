@@ -114,7 +114,7 @@ v2.3-w2: add safe auto layout and shelf resize rules
 ---
 
 ## Phase W3 — Web Layout Manager & 2D/3D Sync
-Status: TODO
+Status: DONE
 
 Upgrade Settings into a real visual warehouse layout manager and prove that one server mutation updates both representations.
 

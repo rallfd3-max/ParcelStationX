@@ -41,4 +41,6 @@ export interface ParcelEvent { id: number; parcelId: number; eventType: string; 
 export interface ParcelDetails { parcel: Parcel; customer: {id:number;name:string;maskedMobile:string}|null; operator:string|null; shelfCode:string|null; slotCode:string|null; events:ParcelEvent[]; relocations:Relocation[]; pickupCode:string }
 export interface ExceptionRecord { id:number; parcelId:number; exceptionType:string; description:string; status:string; createdBy:number; handledBy:number|null; createdAt:string; handledAt:string|null; resolution:string|null }
 export interface WarehouseSnapshot { shelves: Shelf[]; layouts: ShelfLayout[]; slots: ShelfSlot[]; parcels: Parcel[] }
+export interface ShelfCreationItem { shelf:Shelf;layout:ShelfLayout;slotCount:number }
+export interface ShelfCreationResult { shelves:ShelfCreationItem[];shelfCount:number;slotCount:number;preview:boolean }
 export interface RelocateResponse { parcel: Parcel; relocation: Relocation }

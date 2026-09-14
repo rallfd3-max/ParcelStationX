@@ -24,6 +24,7 @@ export class WarehouseScene {
   private hover: HoverController
   private frame = 0
   private resize: ResizeObserver
+  private disposed = false
 
   constructor(container: HTMLElement, private data: WarehouseSnapshot, select:(id:number)=>void, relocate:(parcelId:number,slotId:number)=>Promise<boolean>,hover:(value:ParcelHover|null)=>void=()=>{}) {
     this.scene.background = new Color(0x07111d)
@@ -43,7 +44,9 @@ export class WarehouseScene {
   private isAvailable(slotId:number,parcelId:number) { const slot=this.data.slots.find(s=>s.id===slotId); return Boolean(slot?.enabled&&!this.data.parcels.some(p=>p.slotId===slotId&&p.id!==parcelId&&p.status!=='PICKED_UP')) }
   focusParcel(parcelId:number){const focus=resolveParcelFocus(parcelId,this.data,this.index);if(!focus)return false;this.camera.focusParcelWorld(focus.target,focus.layout);return true}
   private async build() {
-    this.scene.add(await new GlbEnvironmentLoader().load())
+    const environment=await new GlbEnvironmentLoader().load()
+    if(this.disposed){environment.traverse(object=>{const mesh=object as any;mesh.geometry?.dispose?.();if(Array.isArray(mesh.material))mesh.material.forEach((material:any)=>material.dispose());else mesh.material?.dispose?.()});return}
+    this.scene.add(environment)
     for (const shelf of this.data.shelves) { const layout=this.data.layouts.find(x=>x.shelfId===shelf.id); if(layout)this.scene.add(buildShelf(shelf,layout,this.index)) }
     for (const slot of this.data.slots) { const layout=this.data.layouts.find(x=>x.shelfId===slot.shelfId); if(layout)this.scene.add(buildSlot(slot,layout,this.index)) }
     for (const parcel of this.data.parcels) { const slot=this.data.slots.find(x=>x.id===parcel.slotId),layout=slot&&this.data.layouts.find(x=>x.shelfId===slot.shelfId); if(slot&&layout&&parcel.status!=='PICKED_UP')this.scene.add(buildParcel(parcel,slot,layout,this.index)) }
@@ -51,5 +54,5 @@ export class WarehouseScene {
     this.camera.resetCamera()
   }
   private loop=()=>{this.controls.update();this.renderer.renderer.render(this.scene,this.renderer.camera);this.frame=requestAnimationFrame(this.loop)}
-  dispose(){cancelAnimationFrame(this.frame);this.camera.cancelAnimation();this.hover.dispose();this.drag.dispose();this.resize.disconnect();this.controls.dispose();this.scene.traverse(object=>{const mesh=object as any;mesh.geometry?.dispose?.();if(Array.isArray(mesh.material))mesh.material.forEach((material:any)=>material.dispose());else mesh.material?.dispose?.()});this.index.clear();this.renderer.dispose()}
+  dispose(){if(this.disposed)return;this.disposed=true;cancelAnimationFrame(this.frame);this.camera.cancelAnimation();this.hover.dispose();this.drag.dispose();this.resize.disconnect();this.controls.dispose();this.scene.traverse(object=>{const mesh=object as any;mesh.geometry?.dispose?.();if(Array.isArray(mesh.material))mesh.material.forEach((material:any)=>material.dispose());else mesh.material?.dispose?.()});this.index.clear();this.renderer.dispose()}
 }

@@ -171,7 +171,7 @@ v2.3-w3: add visual shelf manager and twin synchronization
 ---
 
 ## Phase W4 — Warehouse Agent Contract & Two-Phase Execution
-Status: TODO
+Status: DONE
 
 Implement the safe AI/action boundary without duplicating the V2.2 MaiMaiYa client.
 

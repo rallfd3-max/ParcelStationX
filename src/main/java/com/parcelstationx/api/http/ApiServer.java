@@ -46,6 +46,7 @@ public final class ApiServer implements AutoCloseable {
         null,
         null,
         null,
+        null,
         null);
   }
 
@@ -69,6 +70,7 @@ public final class ApiServer implements AutoCloseable {
         warehouse,
         relocationService,
         relocations,
+        null,
         null,
         null,
         null,
@@ -228,6 +230,43 @@ public final class ApiServer implements AutoCloseable {
       AiFeatureServices aiServices,
       ShelfManagementService shelfManagement)
       throws IOException {
+    this(
+        address,
+        authentication,
+        parcels,
+        sessions,
+        warehouse,
+        relocationService,
+        relocations,
+        parcelQueries,
+        exceptionService,
+        userService,
+        parcelService,
+        dashboardAnalytics,
+        aiConfig,
+        aiServices,
+        shelfManagement,
+        null);
+  }
+
+  public ApiServer(
+      InetSocketAddress address,
+      AuthenticationService authentication,
+      ParcelDao parcels,
+      SessionManager sessions,
+      WarehouseLayoutService warehouse,
+      RelocationService relocationService,
+      ParcelRelocationDao relocations,
+      ParcelQueryService parcelQueries,
+      ExceptionService exceptionService,
+      UserService userService,
+      ParcelService parcelService,
+      DashboardAnalyticsService dashboardAnalytics,
+      AiClientConfig aiConfig,
+      AiFeatureServices aiServices,
+      ShelfManagementService shelfManagement,
+      com.parcelstationx.warehouseagent.WarehouseAgentService warehouseAgent)
+      throws IOException {
     JsonCodec json = new JsonCodec();
     Router router = new Router(json, sessions);
     registerRoutes(
@@ -246,7 +285,8 @@ public final class ApiServer implements AutoCloseable {
         dashboardAnalytics,
         aiConfig,
         aiServices,
-        shelfManagement);
+        shelfManagement,
+        warehouseAgent);
     server = HttpServer.create(address, 0);
     executor =
         Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()));
@@ -270,7 +310,8 @@ public final class ApiServer implements AutoCloseable {
       DashboardAnalyticsService dashboardAnalytics,
       AiClientConfig aiConfig,
       AiFeatureServices aiServices,
-      ShelfManagementService shelfManagement) {
+      ShelfManagementService shelfManagement,
+      com.parcelstationx.warehouseagent.WarehouseAgentService warehouseAgent) {
     router.add(new Route("GET", "/api/health", false, null, context -> Map.of("status", "UP")));
     if (aiConfig != null) {
       router.add(new Route("GET", "/api/ai/status", true, null, context -> aiConfig.status()));
@@ -296,6 +337,40 @@ public final class ApiServer implements AutoCloseable {
                   throw new BadRequestException("exceptionId 必填。", "MISSING_FIELD");
                 }
                 return aiServices.exceptionAdvice().advise(request.exceptionId());
+              }));
+    }
+    if (warehouseAgent != null) {
+      router.add(
+          new Route(
+              "POST",
+              "/api/ai/warehouse/plan",
+              true,
+              UserRole.ADMIN,
+              c -> {
+                WarehouseAgentRequest request = json.read(c.body(), WarehouseAgentRequest.class);
+                if (request == null || request.command() == null || request.command().isBlank())
+                  throw new BadRequestException("command 必填。", "MISSING_FIELD");
+                return warehouseAgent.plan(c.user().id(), request.command());
+              }));
+      router.add(
+          new Route(
+              "POST",
+              "/api/ai/warehouse/plans/{id}/confirm",
+              true,
+              UserRole.ADMIN,
+              c ->
+                  warehouseAgent.confirm(
+                      planId(c.pathParameter("id")), c.user().id())));
+      router.add(
+          new Route(
+              "DELETE",
+              "/api/ai/warehouse/plans/{id}",
+              true,
+              UserRole.ADMIN,
+              c -> {
+                warehouseAgent.cancel(
+                    planId(c.pathParameter("id")), c.user().id());
+                return Map.of("cancelled", true);
               }));
     }
     if (dashboardAnalytics != null) {
@@ -675,6 +750,14 @@ public final class ApiServer implements AutoCloseable {
                   throw new BadRequestException("enabled 必填。", "MISSING_FIELD");
                 return warehouse.setSlotEnabled(parseId(c.pathParameter("id")), request.enabled());
               }));
+    }
+  }
+
+  private static java.util.UUID planId(String value) {
+    try {
+      return java.util.UUID.fromString(value);
+    } catch (IllegalArgumentException exception) {
+      throw new BadRequestException("计划 ID 格式无效。", "INVALID_PLAN_ID");
     }
   }
 

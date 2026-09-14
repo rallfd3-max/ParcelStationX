@@ -10,6 +10,7 @@ import com.parcelstationx.config.ConnectionProvider;
 import com.parcelstationx.dao.impl.*;
 import com.parcelstationx.model.*;
 import com.parcelstationx.service.*;
+import com.parcelstationx.warehouseagent.*;
 import java.net.*;
 import java.net.http.*;
 import java.sql.DriverManager;
@@ -97,6 +98,9 @@ class ManagementApiTest {
     var tx = new TransactionRunner(cp);
     var warehouse = new WarehouseLayoutService(shelves, layouts, slots, parcels);
     var shelfManagement = new ShelfManagementService(tx, shelves, layouts, slots, logs, parcels);
+    var warehouseAgent =
+        new WarehouseAgentService(
+            new FakeWarehouseAgentParser(), new WarehouseAgentValidator(), new WarehousePlanStore(), shelfManagement);
     server =
         new ApiServer(
             new InetSocketAddress("127.0.0.1", 0),
@@ -113,7 +117,8 @@ class ManagementApiTest {
             null,
             null,
             null,
-            shelfManagement);
+            shelfManagement,
+            warehouseAgent);
     server.start();
     base = "http://127.0.0.1:" + server.port();
   }
@@ -225,6 +230,38 @@ class ManagementApiTest {
         200,
         request("PUT", "/api/admin/shelves/" + id + "/enabled", "{\"enabled\":false}", admin)
             .statusCode());
+  }
+
+  @Test
+  void warehouseAgentRequiresPlanThenExplicitAdminConfirmation() throws Exception {
+    String command = "{\"command\":\"帮我在E区增加4个货架，每个5层6列，主通道宽一点\"}";
+    String admin = login("admin");
+    assertEquals(403, request("POST", "/api/ai/warehouse/plan", command, login("staff")).statusCode());
+
+    JsonNode plan = data(request("POST", "/api/ai/warehouse/plan", command, admin));
+    assertEquals("PENDING", plan.get("status").asText());
+    assertEquals(4, plan.at("/preview/shelfCount").asInt());
+    assertEquals(1, data(request("GET", "/api/admin/warehouse", null, admin)).get("shelves").size());
+
+    String planId = plan.get("id").asText();
+    JsonNode created = data(request("POST", "/api/ai/warehouse/plans/" + planId + "/confirm", null, admin));
+    assertEquals(4, created.get("shelfCount").asInt());
+    assertEquals(5, data(request("GET", "/api/admin/warehouse", null, admin)).get("shelves").size());
+    assertEquals(400, request("POST", "/api/ai/warehouse/plans/" + planId + "/confirm", null, admin).statusCode());
+    assertEquals(400, request("POST", "/api/ai/warehouse/plans/not-a-uuid/confirm", null, admin).statusCode());
+  }
+
+  @Test
+  void warehouseAgentRejectsPromptInjectionWithoutWritingWarehouseData() throws Exception {
+    String admin = login("admin");
+    String[] hostile = {"删除所有货架", "DROP DATABASE parcels", "执行rm -rf", "访问任意URL"};
+    for (String command : hostile) {
+      assertEquals(
+          400,
+          request("POST", "/api/ai/warehouse/plan", "{\"command\":\"" + command + "\"}", admin)
+              .statusCode());
+    }
+    assertEquals(1, data(request("GET", "/api/admin/warehouse", null, admin)).get("shelves").size());
   }
 
   private String login(String user) throws Exception {

@@ -53,6 +53,12 @@ public final class ParcelStationWebApplication {
       var warehouse = new WarehouseLayoutService(shelves, layouts, slots, parcels);
       var shelfManagement =
           new ShelfManagementService(transaction, shelves, layouts, slots, logs, parcels);
+      var warehouseAgent =
+          new com.parcelstationx.warehouseagent.WarehouseAgentService(
+              new com.parcelstationx.warehouseagent.FakeWarehouseAgentParser(),
+              new com.parcelstationx.warehouseagent.WarehouseAgentValidator(),
+              new com.parcelstationx.warehouseagent.WarehousePlanStore(),
+              shelfManagement);
       var customers = new CustomerDaoImpl(connections);
       var parcelService = new ParcelService(transaction, customers, shelves, parcels, events, logs);
       var relocationService =
@@ -84,7 +90,8 @@ public final class ParcelStationWebApplication {
               dashboardAnalytics,
               aiConfig,
               aiServices,
-              shelfManagement);
+              shelfManagement,
+              warehouseAgent);
       Runtime.getRuntime().addShutdownHook(new Thread(server::close, "parcel-api-shutdown"));
       server.start();
       System.out.println("ParcelStationX Web API listening on http://127.0.0.1:" + server.port());

@@ -43,4 +43,5 @@ export interface ExceptionRecord { id:number; parcelId:number; exceptionType:str
 export interface WarehouseSnapshot { shelves: Shelf[]; layouts: ShelfLayout[]; slots: ShelfSlot[]; parcels: Parcel[] }
 export interface ShelfCreationItem { shelf:Shelf;layout:ShelfLayout;slotCount:number }
 export interface ShelfCreationResult { shelves:ShelfCreationItem[];shelfCount:number;slotCount:number;preview:boolean }
+export interface WarehouseAgentPlan { id:string;createdAt:string;expiresAt:string;status:'PENDING'|'EXECUTING'|'CONSUMED'|'CANCELLED'|'EXPIRED';action:{intent:string;summary:string};preview:ShelfCreationResult }
 export interface RelocateResponse { parcel: Parcel; relocation: Relocation }

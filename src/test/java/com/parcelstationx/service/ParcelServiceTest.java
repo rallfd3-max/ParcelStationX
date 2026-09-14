@@ -6,6 +6,7 @@ import com.parcelstationx.config.ConnectionProvider;
 import com.parcelstationx.dao.impl.*;
 import com.parcelstationx.exception.BusinessException;
 import com.parcelstationx.model.*;
+import com.parcelstationx.task.NotificationQueue;
 import java.sql.DriverManager;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,8 @@ class ParcelServiceTest {
           "CREATE TABLE parcel_events(id BIGINT AUTO_INCREMENT PRIMARY KEY,parcel_id BIGINT,event_type VARCHAR(30),from_status VARCHAR(30),to_status VARCHAR(30),operator_id BIGINT,description VARCHAR(255),created_at TIMESTAMP)");
       s.execute(
           "CREATE TABLE operation_logs(id BIGINT AUTO_INCREMENT PRIMARY KEY,user_id BIGINT,operation_type VARCHAR(50),target_type VARCHAR(50),target_id BIGINT,description VARCHAR(500),created_at TIMESTAMP)");
+      s.execute(
+          "CREATE TABLE notification_records(id BIGINT AUTO_INCREMENT PRIMARY KEY,parcel_id BIGINT,customer_id BIGINT,notification_type VARCHAR(30),target VARCHAR(100),content VARCHAR(500),status VARCHAR(20),retry_count INT,created_at TIMESTAMP,sent_at TIMESTAMP,error_message VARCHAR(255))");
     }
     CustomerDaoImpl customers = new CustomerDaoImpl(connections);
     shelves = new ShelfDaoImpl(connections);
@@ -99,6 +102,11 @@ class ParcelServiceTest {
 
   @Test
   void rollsBackInboundWhenAuditWriteFails() throws Exception {
+    NotificationRecordDaoImpl notificationRecords = new NotificationRecordDaoImpl(connections);
+    NotificationService notificationService =
+        new NotificationService(
+            notificationRecords, new CustomerDaoImpl(connections), new NotificationQueue());
+    service.withNotifications(notificationService);
     try (var connection = connections.getConnection();
         var statement = connection.createStatement()) {
       statement.execute("DROP TABLE operation_logs");
@@ -119,5 +127,7 @@ class ParcelServiceTest {
         assertEquals(0, rows.getInt(1));
       }
     }
+    notificationService.close();
+    assertTrue(notificationRecords.findAll().isEmpty());
   }
 }

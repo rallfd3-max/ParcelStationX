@@ -12,6 +12,7 @@
 | `/digital-twin` | `DigitalTwinView` | warehouse/relocate API | 完整 |
 | `/parcels` | `ParcelsView` | parcel-details/events/relocations API | 已补齐 |
 | `/exceptions` | `ExceptionsView` | exception create/list/resolve API | 已补齐 |
+| `/ai` | `AiAssistantView` | server-validated AI intent API | 已补齐（Provider 响应受运行时状态影响） |
 | `/analytics` | 重定向 `/dashboard#analytics` | dashboard analytics API | 已合并到首页 |
 | `/settings` | `SettingsView` | admin users/layout/slots API | 已补齐，ADMIN only |
 
@@ -28,6 +29,9 @@
 - 异常中心通过 `ExceptionService` 登记和处理。服务规则会同步 Parcel 状态、ExceptionRecord、ParcelEvent 和 OperationLog；它不直接改货位。操作后前端重载异常与 warehouse snapshot，Dashboard/Analytics 在重新进入或刷新时读取最新 API。
 - 系统管理支持员工查看/新增/启禁用、布局参数保存、仓位启禁用和系统信息。占用中的 Slot 不能禁用。布局/仓位 mutation 后主动刷新共享 WarehouseStore。
 - Web 备份/恢复未暴露：现有实现以服务器本地文件为边界，缺少安全的上传/下载协议，页面明确指向 legacy Swing 能力，没有伪按钮。
+- V2.2 AI 洞察仅输入 `DashboardAnalyticsService` 的最小真实聚合上下文；异常建议仅填充待确认草稿，最终变更仍经 `ExceptionService`。
+- `/api/ai/query` 只接受 Java 枚举白名单和受限过滤器，模型不产生可执行 SQL、Shell 或文件操作；唯一快件才返回 `FOCUS_PARCEL`，多结果由用户选择。
+- 入库通知在事务提交后进入既有 Queue/Gateway/`notification_records`；7/10/15 天扫描使用可注入 `Clock`、持久化阶段去重和发送前状态复查。手机号在 mock 日志中脱敏，AI 文案只使用占位符并有固定模板回退。
 
 ## 架构审计
 

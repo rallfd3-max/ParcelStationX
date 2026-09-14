@@ -7,6 +7,7 @@ import com.parcelstationx.config.AppConfig;
 import com.parcelstationx.config.ConnectionFactory;
 import com.parcelstationx.dao.impl.CustomerDaoImpl;
 import com.parcelstationx.dao.impl.ExceptionRecordDaoImpl;
+import com.parcelstationx.dao.impl.NotificationRecordDaoImpl;
 import com.parcelstationx.dao.impl.OperationLogDaoImpl;
 import com.parcelstationx.dao.impl.ParcelDaoImpl;
 import com.parcelstationx.dao.impl.ParcelEventDaoImpl;
@@ -19,6 +20,9 @@ import com.parcelstationx.exception.AppException;
 import com.parcelstationx.service.AuthenticationService;
 import com.parcelstationx.service.DashboardAnalyticsService;
 import com.parcelstationx.service.ExceptionService;
+import com.parcelstationx.service.MockSmsGateway;
+import com.parcelstationx.service.NotificationContentService;
+import com.parcelstationx.service.NotificationService;
 import com.parcelstationx.service.ParcelQueryService;
 import com.parcelstationx.service.ParcelService;
 import com.parcelstationx.service.PasswordHasher;
@@ -27,8 +31,11 @@ import com.parcelstationx.service.ShelfManagementService;
 import com.parcelstationx.service.TransactionRunner;
 import com.parcelstationx.service.UserService;
 import com.parcelstationx.service.WarehouseLayoutService;
+import com.parcelstationx.task.NotificationQueue;
+import com.parcelstationx.task.OverdueNotificationScheduler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Clock;
 
 public final class ParcelStationWebApplication {
   private ParcelStationWebApplication() {}
@@ -38,6 +45,7 @@ public final class ParcelStationWebApplication {
     try {
       var connections = new ConnectionFactory(AppConfig.loadDatabaseConfig());
       var aiConfig = AppConfig.loadAiClientConfig();
+      var notificationConfig = AppConfig.loadNotificationConfig();
       var aiClient = new OpenAiCompatibleAiClient(aiConfig);
       var authentication =
           new AuthenticationService(new UserDaoImpl(connections), new PasswordHasher());
@@ -53,14 +61,21 @@ public final class ParcelStationWebApplication {
       var warehouse = new WarehouseLayoutService(shelves, layouts, slots, parcels);
       var shelfManagement =
           new ShelfManagementService(transaction, shelves, layouts, slots, logs, parcels);
-      var warehouseAgent =
-          new com.parcelstationx.warehouseagent.WarehouseAgentService(
-              new com.parcelstationx.warehouseagent.FakeWarehouseAgentParser(),
-              new com.parcelstationx.warehouseagent.WarehouseAgentValidator(),
-              new com.parcelstationx.warehouseagent.WarehousePlanStore(),
-              shelfManagement);
       var customers = new CustomerDaoImpl(connections);
       var parcelService = new ParcelService(transaction, customers, shelves, parcels, events, logs);
+      var notificationService =
+          new NotificationService(
+              new NotificationRecordDaoImpl(connections),
+              customers,
+              new NotificationQueue(),
+              new MockSmsGateway(),
+              parcels,
+              new NotificationContentService(aiConfig.enabled() ? aiClient : null),
+              notificationConfig.maxRetries());
+      parcelService.withNotifications(notificationService);
+      var overdueScheduler =
+          new OverdueNotificationScheduler(
+              parcels, notificationService, notificationConfig, Clock.systemDefaultZone());
       var relocationService =
           new RelocationService(transaction, parcels, slots, shelves, relocations, events, logs);
       var exceptionService =
@@ -72,7 +87,10 @@ public final class ParcelStationWebApplication {
       var aiServices =
           new AiFeatureServices(
               new AiOperationsService(aiClient, dashboardAnalytics, validator),
-              new AiExceptionAdviceService(aiClient, exceptionService, parcels, validator));
+              new AiExceptionAdviceService(aiClient, exceptionService, parcels, validator),
+              new AiAssistantService(
+                  new AiIntentParser(aiClient, validator),
+                  new AiQueryExecutor(warehouse, exceptionService, dashboardAnalytics)));
       var server =
           new ApiServer(
               new InetSocketAddress("127.0.0.1", port),
@@ -91,9 +109,22 @@ public final class ParcelStationWebApplication {
               aiConfig,
               aiServices,
               shelfManagement,
-              warehouseAgent);
-      Runtime.getRuntime().addShutdownHook(new Thread(server::close, "parcel-api-shutdown"));
+              new com.parcelstationx.warehouseagent.WarehouseAgentService(
+                  new com.parcelstationx.warehouseagent.AiWarehouseAgentParser(aiClient, validator),
+                  new com.parcelstationx.warehouseagent.WarehouseAgentValidator(),
+                  new com.parcelstationx.warehouseagent.WarehousePlanStore(),
+                  shelfManagement));
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    server.close();
+                    overdueScheduler.close();
+                    notificationService.close();
+                  },
+                  "parcel-api-shutdown"));
       server.start();
+      overdueScheduler.start();
       System.out.println("ParcelStationX Web API listening on http://127.0.0.1:" + server.port());
     } catch (AppException | IOException | NumberFormatException exception) {
       System.err.println("Unable to start ParcelStationX Web API: " + exception.getMessage());

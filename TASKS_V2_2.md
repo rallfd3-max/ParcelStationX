@@ -45,7 +45,7 @@ Acceptance:
 - tests cover invalid model output and fallback/error UI.
 
 ## Phase AI-3 — Global Assistant & 3D Link
-Status: TODO
+Status: DONE
 
 Add `/ai` global assistant page and navigation. Implement whitelist natural-language intents: PARCEL_SEARCH, OVERDUE_PARCELS, PARCEL_LOCATE, SHELF_AVAILABILITY, SHELF_UTILIZATION, UNRESOLVED_EXCEPTIONS, TODAY_SUMMARY, UNSUPPORTED. GPT through MaiMaiYa only parses intent/filters; Java validates and executes existing Service/DAO queries with PreparedStatement. Never execute model-generated SQL. Return constrained actions such as FOCUS_PARCEL. Reuse `/digital-twin?parcelId=...` / WarehouseScene.focusParcel for 3D navigation.
 
@@ -58,7 +58,7 @@ Acceptance:
 - tests cover intent/filters/action validation.
 
 ## Phase AI-4 — Intelligent Notifications
-Status: TODO
+Status: DONE
 
 Wire existing NotificationService/NotificationQueue/NotificationGateway into ParcelStationWebApplication and ParcelService. Add stable MockSmsGateway for course demo. Keep inbound notification strictly after successful transaction commit. Add safe notification content generation: deterministic fallback template plus optional MaiMaiYa AI placeholder-template polish; do not send real mobile/pickupCode to GPT. Add configurable overdue stages (default 7,10,15 days), ScheduledExecutorService scanner, persistent dedupe by parcel + notification stage, retry limits, send-time IN_STOCK recheck and shutdown cleanup.
 
@@ -73,7 +73,7 @@ Acceptance:
 - mock mode clearly identifies itself and never claims external SMS delivery.
 
 ## Phase AI-5 — Full Regression, MaiMaiYa Real Relay Smoke & Defense Docs
-Status: TODO
+Status: IN_PROGRESS
 
 Run full Java/frontend/MySQL regression. If local MaiMaiYa credentials/config are available, perform a small real MaiMaiYa relay smoke test without logging secrets; otherwise record the external blocker and keep fake-client coverage green. If Computer Use can access an already-authorized local MaiMaiYa session, it may inspect `https://maimaiya.click/profile` only to obtain the actual API Base URL/model/config needed for the local environment. Do not copy full keys into chat, Git, screenshots or reports. Use browser/computer control when available to validate homepage AI insight, exception advice, global assistant, 3D focus, inbound notification and overdue demo. Update README, V2 test/final audit/demo/defense docs and add V2.2 test report/development logs.
 
@@ -98,3 +98,5 @@ Final V2.2 DONE requires:
 - notification scheduler has no thread leak;
 - all deterministic tests pass;
 - browser workflow is documented with truthful limitations.
+
+AI-5 progress (2026-09-14): Java unit regression, real MySQL integration, frontend gates, V2.2 index migration, local login/dashboard, scheduler mock delivery and the read-only assistant injection rejection all passed. A short real MaiMaiYa OpenAI-Compatible smoke passed with the locally configured model. The provider timed out on the longer structured operations-insight request at the configured 30-second boundary; the UI displayed its retryable failure state and normal business data remained available. Keep this phase `IN_PROGRESS` until the configured provider/model can return the structured production prompts within the chosen timeout, then re-run the documented browser chain.

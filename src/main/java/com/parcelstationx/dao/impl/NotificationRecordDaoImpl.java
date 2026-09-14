@@ -4,6 +4,7 @@ import com.parcelstationx.config.ConnectionProvider;
 import com.parcelstationx.dao.NotificationRecordDao;
 import com.parcelstationx.model.*;
 import java.util.List;
+import java.util.Optional;
 
 public final class NotificationRecordDaoImpl extends AbstractJdbcDao<NotificationRecord>
     implements NotificationRecordDao {
@@ -43,6 +44,18 @@ public final class NotificationRecordDaoImpl extends AbstractJdbcDao<Notificatio
     return query(
         "SELECT " + C + " FROM notification_records WHERE status=? ORDER BY id",
         (s, v) -> s.setString(1, status.name()));
+  }
+
+  @Override
+  public Optional<NotificationRecord> findByParcelAndType(long parcelId, String notificationType) {
+    return queryOne(
+        "SELECT "
+            + C
+            + " FROM notification_records WHERE parcel_id=? AND notification_type=? ORDER BY id DESC LIMIT 1",
+        (s, v) -> {
+          s.setLong(1, parcelId);
+          s.setString(2, notificationType);
+        });
   }
 
   @Override

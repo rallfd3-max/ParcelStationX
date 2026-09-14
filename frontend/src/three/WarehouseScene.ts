@@ -53,6 +53,6 @@ export class WarehouseScene {
     this.data.parcels.filter(parcel=>parcel.status==='IN_STOCK'&&parcel.slotId===null).forEach((parcel,order)=>this.scene.add(buildStagingParcel(parcel,order,this.index)))
     this.camera.resetCamera()
   }
-  private loop=()=>{this.controls.update();this.renderer.renderer.render(this.scene,this.renderer.camera);this.frame=requestAnimationFrame(this.loop)}
+  private loop=()=>{this.controls.update();this.hover.update();this.renderer.renderer.render(this.scene,this.renderer.camera);this.frame=requestAnimationFrame(this.loop)}
   dispose(){if(this.disposed)return;this.disposed=true;cancelAnimationFrame(this.frame);this.camera.cancelAnimation();this.hover.dispose();this.drag.dispose();this.resize.disconnect();this.controls.dispose();this.scene.traverse(object=>{const mesh=object as any;mesh.geometry?.dispose?.();if(Array.isArray(mesh.material))mesh.material.forEach((material:any)=>material.dispose());else mesh.material?.dispose?.()});this.index.clear();this.renderer.dispose()}
 }

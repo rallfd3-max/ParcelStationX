@@ -23,7 +23,7 @@ Acceptance:
 - frontend type-check/test/build pass.
 
 ## H2 — Parcel-Adjacent Hover Tooltip
-Status: TODO
+Status: DONE
 
 Fix hover so parcel information appears immediately beside the hovered parcel.
 

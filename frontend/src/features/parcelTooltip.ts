@@ -1,3 +1,5 @@
-import type { ParcelDetails } from '@/types/api'
+import type { ParcelDetails,WarehouseSnapshot } from '@/types/api'
+export interface SnapshotTooltip {trackingNo:string;courierCompany:string;status:string;slotCode:string;arrivedAt:string}
+export function snapshotTooltip(data:WarehouseSnapshot,parcelId:number):SnapshotTooltip|null{const parcel=data.parcels.find(value=>value.id===parcelId);if(!parcel)return null;const slot=data.slots.find(value=>value.id===parcel.slotId);return{trackingNo:parcel.trackingNo,courierCompany:parcel.courierCompany,status:parcel.status,slotCode:slot?.slotCode??'入库暂存区',arrivedAt:parcel.arrivedAt}}
 export function dwellText(arrivedAt:string,now=Date.now()){const hours=Math.max(0,Math.floor((now-new Date(arrivedAt).getTime())/3_600_000));return hours<24?`${hours} 小时`:`${Math.floor(hours/24)} 天 ${hours%24} 小时`}
 export function tooltipLines(detail:ParcelDetails,now=Date.now()){return [detail.parcel.trackingNo,detail.parcel.courierCompany,detail.parcel.status,detail.slotCode??'入库暂存区',detail.customer?`${detail.customer.name} · ${detail.customer.maskedMobile}`:'客户未知',detail.parcel.arrivedAt.replace('T',' '),dwellText(detail.parcel.arrivedAt,now)]}

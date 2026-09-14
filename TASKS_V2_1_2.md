@@ -46,7 +46,7 @@ Acceptance:
 - frontend type-check/test/build pass.
 
 ## H3 — Browser Regression
-Status: TODO
+Status: DONE
 
 Run full regression after H1/H2.
 

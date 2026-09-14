@@ -73,7 +73,7 @@ Acceptance:
 - mock mode clearly identifies itself and never claims external SMS delivery.
 
 ## Phase AI-5 — Full Regression, MaiMaiYa Real Relay Smoke & Defense Docs
-Status: TODO
+Status: IN_PROGRESS
 
 Run full Java/frontend/MySQL regression. If local MaiMaiYa credentials/config are available, perform a small real MaiMaiYa relay smoke test without logging secrets; otherwise record the external blocker and keep fake-client coverage green. If Computer Use can access an already-authorized local MaiMaiYa session, it may inspect `https://maimaiya.click/profile` only to obtain the actual API Base URL/model/config needed for the local environment. Do not copy full keys into chat, Git, screenshots or reports. Use browser/computer control when available to validate homepage AI insight, exception advice, global assistant, 3D focus, inbound notification and overdue demo. Update README, V2 test/final audit/demo/defense docs and add V2.2 test report/development logs.
 
@@ -98,3 +98,5 @@ Final V2.2 DONE requires:
 - notification scheduler has no thread leak;
 - all deterministic tests pass;
 - browser workflow is documented with truthful limitations.
+
+AI-5 progress (2026-09-14): Java unit regression, real MySQL integration, frontend gates, V2.2 index migration, local login/dashboard, scheduler mock delivery and the read-only assistant injection rejection all passed. A short real MaiMaiYa OpenAI-Compatible smoke passed with the locally configured model. The provider timed out on the longer structured operations-insight request at the configured 30-second boundary; the UI displayed its retryable failure state and normal business data remained available. Keep this phase `IN_PROGRESS` until the configured provider/model can return the structured production prompts within the chosen timeout, then re-run the documented browser chain.

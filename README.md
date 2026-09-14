@@ -11,7 +11,7 @@ src/main/resources/db/schema.sql
 src/main/resources/db/seed.sql
 ```
 
-从 V1 升级时，先备份数据库，再依次执行原 V1 schema、`src/main/resources/db/migration/V2_0_1__digital_twin_layout.sql`、`seed.sql` 和 `src/main/resources/db/migration/V2_1_0__expand_demo_warehouse.sql`。V2.1 迁移可重复执行，不删除已有快件，并扩展为八组货架、240 个真实仓位。
+从 V1 升级时，先备份数据库，再依次执行原 V1 schema、`src/main/resources/db/migration/V2_0_1__digital_twin_layout.sql`、`seed.sql`、`src/main/resources/db/migration/V2_1_0__expand_demo_warehouse.sql` 和 `src/main/resources/db/migration/V2_2_0__ai_notification_indexes.sql`。最后一个迁移仅添加通知去重/扫描索引，不删除已有数据。
 
 复制 `application.example.properties` 为不提交的 `application.properties`，或设置 `PARCEL_DB_URL`、`PARCEL_DB_USERNAME`、`PARCEL_DB_PASSWORD`。
 
@@ -82,6 +82,8 @@ MySQL 集成测试仅在三个 `PARCEL_DB_*` 变量齐全时执行；缺失时�
 
 V2.1 首页已合并运营分析，数字孪生支持暂存区快速入库、hover 详情、3D 换位和取件码确认出库；二维仓库支持独立滚动区和拖拽边缘自动滚动。
 
-V2.2 计划增加：首页 AI 运营洞察、异常 AI 处置建议、全局自然语言查询、AI 结果联动 3D、入库自动通知与 7/10/15 天滞留提醒。
+V2.2 已实现：首页基于 `DashboardAnalyticsService` 真实聚合数据的 AI 运营洞察、只生成草稿的异常处置建议、`/ai` 白名单只读查询与 3D 定位、入库后通知，以及 7/10/15 天持久化去重的滞留提醒。模型不能生成或执行 SQL；所有数据读取仍经 Java Service/DAO/JDBC。AI 不可用时，核心入出库、2D/3D、事务和固定通知模板继续可用。
+
+通知默认使用课程版 `MockSmsGateway`，会完整记录 `PENDING → queue → SUCCESS/FAILED`，并在日志中脱敏手机号；没有供应商合同不会伪造真实 SMS Gateway。可用 `PARCEL_OVERDUE_REMINDER_DAYS=7,10,15`、`PARCEL_NOTIFICATION_SCAN_MINUTES`、`PARCEL_NOTIFICATION_MAX_RETRIES` 与 `PARCEL_SMS_MODE=mock` 配置。通知服务只在入库事务提交后运行；滞留扫描在发送前再次读取快件状态，已出库快件不会再提醒。
 
 核心调用方向：`UI/Web -> Service -> DAO -> JDBC -> MySQL`；AI 外部调用方向：`Vue -> ParcelStationX Java API -> AiClient -> MaiMaiYa OpenAI-Compatible API`。
